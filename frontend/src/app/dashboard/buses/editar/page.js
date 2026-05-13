@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
@@ -6,7 +7,7 @@ import { api } from "@/lib/api";
 const input = { width: "100%", padding: "0.75rem 1rem", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" };
 const label = { color: "#9ca3af", fontSize: 13, display: "block", marginBottom: 6 };
 
-export default function EditarBus() {
+function EditarBusForm() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
@@ -91,7 +92,6 @@ export default function EditarBus() {
         {error && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.75rem", color: "#f87171", fontSize: 13, marginBottom: "1rem" }}>{error}</div>}
 
         <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label style={label}>Patente <span style={{ color: "#f97316" }}>*</span></label>
@@ -102,7 +102,6 @@ export default function EditarBus() {
               <input style={input} type="number" placeholder="2018" value={form.anio} onChange={e => set("anio", e.target.value)} />
             </div>
           </div>
-
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
             <div>
               <label style={label}>Marca</label>
@@ -113,12 +112,10 @@ export default function EditarBus() {
               <input style={input} placeholder="OF-1721" value={form.modelo} onChange={e => set("modelo", e.target.value)} />
             </div>
           </div>
-
           <div>
             <label style={label}>Recorrido</label>
             <input style={input} placeholder="Viña - Quilpué" value={form.recorrido} onChange={e => set("recorrido", e.target.value)} />
           </div>
-
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "1rem" }}>
             <div style={{ color: "#9ca3af", fontSize: 12, marginBottom: "1rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Documentos y vencimientos</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
@@ -136,17 +133,23 @@ export default function EditarBus() {
               </div>
             </div>
           </div>
-
           <div>
             <label style={label}>Notas</label>
             <textarea style={{ ...input, height: 80, resize: "vertical" }} placeholder="Observaciones..." value={form.notas} onChange={e => set("notas", e.target.value)} />
           </div>
-
           <button onClick={guardar} disabled={loading} style={{ padding: "0.85rem", background: "linear-gradient(135deg, #f97316, #ea580c)", border: "none", borderRadius: 10, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer" }}>
             {loading ? "Guardando..." : "Guardar cambios →"}
           </button>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function EditarBus() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: "100vh", background: "#0a0e1a", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ color: "#6b7280" }}>Cargando...</div></main>}>
+      <EditarBusForm />
+    </Suspense>
   );
 }
