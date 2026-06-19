@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 from app.database import get_db
 from app.models.bus import Bus, EstadoBus
-from app.models.usuario import Usuario
+from app.models.usuario import Usuario, PLAN_LIMITES
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/buses", tags=["Buses"])
@@ -95,6 +95,10 @@ async def crear_bus(
     db:      AsyncSession = Depends(get_db),
     current: Usuario      = Depends(get_current_user),
 ):
+    limite = PLAN_LIMITES.get(current.plan or "estandar", PLAN_LIMITES["estandar"])["buses"]
+    total_actual = (await db.execute(select(func.count()).select_from(select(Bus).where(Bus.owner_id == current.id).subquery()))).scalar()
+    if total_actual >= limite:
+        raise HTTPException(status_code=403, detail=f"Plan {current.plan}: límite de {limite} buses alcanzado. Actualiza tu plan.")
     bus = Bus(**data.model_dump(), owner_id=current.id)
     db.add(bus)
     await db.commit()

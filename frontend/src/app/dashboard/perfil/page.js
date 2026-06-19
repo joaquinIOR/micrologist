@@ -10,6 +10,7 @@ export default function Perfil() {
     nombre: "", empresa: "", ciudad: "", telefono: "",
   });
   const [email, setEmail]     = useState("");
+  const [plan, setPlan]       = useState("estandar");
   const [loading, setLoading] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [error, setError]     = useState("");
@@ -18,6 +19,7 @@ export default function Perfil() {
   useEffect(() => {
     api.perfil.obtener().then(p => {
       setEmail(p.email);
+      setPlan(p.plan || "estandar");
       setForm({
         nombre:   p.nombre   || "",
         empresa:  p.empresa  || "",
@@ -69,6 +71,9 @@ export default function Perfil() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "2rem" }}>
           <a href="/dashboard" style={{ color: "#6b7280", textDecoration: "none", fontSize: 14 }}>← Volver</a>
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Mi Perfil</h1>
+          <span style={{ marginLeft: "auto", padding: "4px 12px", borderRadius: 20, background: plan === "enterprise" ? "rgba(139,92,246,0.15)" : plan === "estandar" ? "rgba(249,115,22,0.15)" : "rgba(107,114,128,0.15)", border: `1px solid ${plan === "enterprise" ? "rgba(139,92,246,0.4)" : plan === "estandar" ? "rgba(249,115,22,0.4)" : "rgba(107,114,128,0.4)"}`, color: plan === "enterprise" ? "#a78bfa" : plan === "estandar" ? "#f97316" : "#9ca3af", fontSize: 12, fontWeight: 700, textTransform: "uppercase" }}>
+            {plan}
+          </span>
         </div>
 
         {error && (
@@ -122,9 +127,14 @@ export default function Perfil() {
           <p style={{ color: "#9ca3af", fontSize: 14, marginBottom: "1rem" }}>
             Envía un resumen de todas las alertas activas de tu flota directamente a tu WhatsApp.
           </p>
-          <button onClick={enviarAlertas} style={{ padding: "0.75rem 1.5rem", background: "rgba(37,211,102,0.15)", border: "1px solid rgba(37,211,102,0.3)", borderRadius: 10, color: "#25d366", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            📱 Enviar alertas por WhatsApp
-          </button>
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            <button onClick={enviarAlertas} style={{ padding: "0.75rem 1.5rem", background: "rgba(37,211,102,0.15)", border: "1px solid rgba(37,211,102,0.3)", borderRadius: 10, color: "#25d366", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              📱 Enviar alertas por WhatsApp
+            </button>
+            <button onClick={() => api.reportes.descargarPDF().catch(e => setError(e.message))} style={{ padding: "0.75rem 1.5rem", background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)", borderRadius: 10, color: "#60a5fa", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              📄 Descargar reporte PDF
+            </button>
+          </div>
         </div>
       </div>
     </main>

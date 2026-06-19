@@ -95,4 +95,25 @@ export const api = {
       return res.json();
     },
   },
+  admin: {
+    stats:       ()             => request("/admin/stats"),
+    usuarios:    ()             => request("/admin/usuarios"),
+    cambiarPlan: (id, plan)     => request(`/admin/usuarios/${id}/plan`, { method: "PUT", body: JSON.stringify({ plan }) }),
+  },
+  reportes: {
+    descargarPDF: async () => {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/reportes/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Error al generar el reporte");
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `reporte-${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  },
 };

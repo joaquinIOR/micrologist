@@ -77,8 +77,8 @@ Las siguientes funcionalidades quedan fuera del alcance del MVP:
 | Limitación | Justificación |
 |------------|---------------|
 | No hay gestión de roles ni múltiples usuarios por empresa | El MVP contempla un único usuario (dueño) por cuenta. |
-| No hay generación de reportes PDF | Se puede agregar en versión posterior con una librería como WeasyPrint. |
-| Las alertas WhatsApp son manuales (el usuario debe presionar "Enviar") | El envío automático programado (cron) requiere un scheduler externo (Celery/APScheduler) no incluido. |
+| ~~No hay generación de reportes PDF~~ | **Implementado en v1.0** con fpdf2: endpoint `/reportes/pdf` genera PDF con estado de flota e ingresos del mes. |
+| ~~Las alertas WhatsApp son manuales~~ | **Implementado en v1.0**: cron diario a las 08:00 en Oracle Cloud ejecuta `/alertas/enviar-automatico`. |
 | No hay mapa de recorridos ni integración con GPS | Requiere integración con APIs de geolocalización fuera del alcance del proyecto de título. |
 | No hay recuperación de contraseña funcional | La página `/recuperar` existe en el frontend pero el endpoint backend no está implementado. |
 | Sin autenticación con proveedores externos (Google, etc.) | Solo login con email y contraseña. |
@@ -91,36 +91,52 @@ Las siguientes funcionalidades quedan fuera del alcance del MVP:
 MicroLogist sigue una **arquitectura cliente-servidor en capas**, con separación estricta entre frontend y backend, comunicados a través de una API REST.
 
 ```
-┌──────────────────────┐         ┌──────────────────────────────────────────┐
-│   CLIENTE (Browser)  │  HTTPS  │               SERVIDOR                   │
-│                      │◄───────►│                                          │
-│  Next.js (React)     │  REST   │  FastAPI (Python)                        │
-│  - App Router        │  JSON   │  ┌────────────────────────────────────┐  │
-│  - src/lib/api.js    │         │  │ Capa de Presentación (Routers)     │  │
-│  - localStorage JWT  │         │  │ /auth /buses /conductores          │  │
-└──────────────────────┘         │  │ /turnos /alertas /ingresos         │  │
-                                 │  ├────────────────────────────────────┤  │
-                                 │  │ Capa de Negocio (Lógica)           │  │
-                                 │  │ Semáforo, validaciones,            │  │
-                                 │  │ cálculo de alertas, multas         │  │
-                                 │  ├────────────────────────────────────┤  │
-                                 │  │ Capa de Datos (SQLAlchemy + ORM)   │  │
-                                 │  │ Modelos: Bus, Conductor,           │  │
-                                 │  │ Turno, Usuario, Ingreso            │  │
-                                 │  └────────────────────────────────────┘  │
-                                 │               │                          │
-                                 └───────────────┼──────────────────────────┘
-                                                 │ asyncpg
-                                                 ▼
-                                      ┌──────────────────┐
-                                      │   PostgreSQL 15  │
-                                      │  (base de datos) │
-                                      └──────────────────┘
-                                                 
-                                      ┌──────────────────┐
-                                      │  Twilio API      │
-                                      │  (WhatsApp)      │
-                                      └──────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          USUARIO FINAL                                  │
+│                     (navegador / móvil)                                 │
+└───────────────────────────┬─────────────────────────────────────────────┘
+                            │ HTTPS
+              ┌─────────────▼──────────────┐
+              │   Vercel (CDN global)       │
+              │   Next.js 14 App Router     │
+              │   JavaScript / React        │
+              │   micrologist.vercel.app    │
+              └─────────────┬──────────────┘
+                            │ REST/JSON (HTTPS)
+              ┌─────────────▼──────────────────────────────────────────┐
+              │          Oracle Cloud A1 ARM — Always Free              │
+              │               4 OCPUs · 24 GB RAM                      │
+              │                                                         │
+              │  ┌─────────────────────────────────────────────────┐   │
+              │  │  Nginx (reverse proxy :80/:443)                  │   │
+              │  └───────────────────┬─────────────────────────────┘   │
+              │                      │ proxy_pass :8000                 │
+              │  ┌───────────────────▼─────────────────────────────┐   │
+              │  │  FastAPI (Python 3.11) — systemd                 │   │
+              │  │  ┌──────────────────────────────────────────┐   │   │
+              │  │  │ Routers: /auth /buses /conductores        │   │   │
+              │  │  │         /turnos /alertas /ingresos        │   │   │
+              │  │  │         /admin /reportes                  │   │   │
+              │  │  ├──────────────────────────────────────────┤   │   │
+              │  │  │ Lógica: semáforo, planes, JWT, rate-limit │   │   │
+              │  │  ├──────────────────────────────────────────┤   │   │
+              │  │  │ SQLAlchemy async + asyncpg                │   │   │
+              │  │  └─────────────────┬────────────────────────┘   │   │
+              │  └────────────────────┼────────────────────────────┘   │
+              │                       │                                 │
+              │  ┌────────────────────▼────────────────────────────┐   │
+              │  │  PostgreSQL 15 (localhost)                       │   │
+              │  │  Tablas: usuarios, buses, conductores,           │   │
+              │  │          turnos, ingresos                        │   │
+              │  └─────────────────────────────────────────────────┘   │
+              │                                                         │
+              │  crontab 08:00 → POST /alertas/enviar-automatico        │
+              └────────────────────────────────────┬────────────────────┘
+                                                   │ WhatsApp API
+                                      ┌────────────▼─────────────┐
+                                      │  Twilio (cloud)           │
+                                      │  Mensajes WhatsApp        │
+                                      └──────────────────────────┘
 ```
 
 **Características del patrón:**

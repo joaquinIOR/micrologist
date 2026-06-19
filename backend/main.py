@@ -7,7 +7,7 @@ import os
 load_dotenv()
 
 from app.database import create_tables
-from app.routers import auth, buses, conductores, turnos, alertas, ingresos
+from app.routers import auth, buses, conductores, turnos, alertas, ingresos, admin, reportes
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,6 +42,8 @@ app.include_router(conductores.router)
 app.include_router(turnos.router)
 app.include_router(alertas.router)
 app.include_router(ingresos.router)
+app.include_router(admin.router)
+app.include_router(reportes.router)
 
 @app.get("/")
 async def root():

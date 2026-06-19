@@ -25,6 +25,8 @@ async def get_db() -> AsyncSession:
             await session.close()
 
 async def create_tables():
+    from sqlalchemy import text
     async with engine.begin() as conn:
         from app.models import bus, conductor, usuario, turno, ingreso  # noqa
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plan VARCHAR(20) DEFAULT 'estandar' NOT NULL"))

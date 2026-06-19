@@ -80,7 +80,7 @@ async def registro(data: RegistroSchema, db: AsyncSession = Depends(get_db)):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "usuario": {"id": user.id, "nombre": user.nombre, "email": user.email, "empresa": user.empresa}
+        "usuario": {"id": user.id, "nombre": user.nombre, "email": user.email, "empresa": user.empresa, "plan": user.plan}
     }
 
 @router.post("/login", response_model=TokenResponse)
@@ -101,7 +101,7 @@ async def login(data: LoginSchema, request: Request, db: AsyncSession = Depends(
     return {
         "access_token": token,
         "token_type": "bearer",
-        "usuario": {"id": user.id, "nombre": user.nombre, "email": user.email, "empresa": user.empresa}
+        "usuario": {"id": user.id, "nombre": user.nombre, "email": user.email, "empresa": user.empresa, "plan": user.plan}
     }
 @router.get("/perfil")
 async def obtener_perfil(
@@ -115,6 +115,7 @@ async def obtener_perfil(
         "empresa":  current.empresa,
         "ciudad":   current.ciudad,
         "telefono": current.telefono,
+        "plan":     current.plan,
     }
 
 class ActualizarPerfilSchema(BaseModel):
@@ -140,6 +141,7 @@ async def actualizar_perfil(
         "empresa":  current.empresa,
         "ciudad":   current.ciudad,
         "telefono": current.telefono,
+        "plan":     current.plan,
     }
 
 # --- Recuperación de contraseña ---

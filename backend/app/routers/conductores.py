@@ -6,7 +6,7 @@ from datetime import date
 from typing import Optional
 from app.database import get_db
 from app.models.conductor import Conductor, EstadoConductor
-from app.models.usuario import Usuario
+from app.models.usuario import Usuario, PLAN_LIMITES
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/conductores", tags=["Conductores"])
@@ -79,6 +79,10 @@ async def crear_conductor(
     db:      AsyncSession = Depends(get_db),
     current: Usuario      = Depends(get_current_user),
 ):
+    limite = PLAN_LIMITES.get(current.plan or "estandar", PLAN_LIMITES["estandar"])["conductores"]
+    total_actual = (await db.execute(select(func.count()).select_from(select(Conductor).where(Conductor.owner_id == current.id).subquery()))).scalar()
+    if total_actual >= limite:
+        raise HTTPException(status_code=403, detail=f"Plan {current.plan}: límite de {limite} conductores alcanzado. Actualiza tu plan.")
     conductor = Conductor(**data.model_dump(), owner_id=current.id)
     db.add(conductor)
     await db.commit()
