@@ -10,6 +10,14 @@ async function request(path, options = {}) {
     },
     ...options,
   });
+
+  if (res.status === 401 && token) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    window.location.href = "/login";
+    return;
+  }
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: "Error desconocido" }));
     throw new Error(error.detail || "Error en la solicitud");
@@ -20,20 +28,24 @@ async function request(path, options = {}) {
 
 export const api = {
   auth: {
-    login:    (data) => request("/auth/login",    { method: "POST", body: JSON.stringify(data) }),
-    registro: (data) => request("/auth/registro", { method: "POST", body: JSON.stringify(data) }),
+    login:          (data) => request("/auth/login",           { method: "POST", body: JSON.stringify(data) }),
+    registro:       (data) => request("/auth/registro",        { method: "POST", body: JSON.stringify(data) }),
+    recuperar:      (data) => request("/auth/recuperar",       { method: "POST", body: JSON.stringify(data) }),
+    nuevaPassword:  (data) => request("/auth/nueva-password",  { method: "POST", body: JSON.stringify(data) }),
   },
   buses: {
-    listar:     ()         => request("/buses"),
-    crear:      (data)     => request("/buses",       { method: "POST", body: JSON.stringify(data) }),
-    actualizar: (id, data) => request(`/buses/${id}`, { method: "PUT",  body: JSON.stringify(data) }),
-    eliminar:   (id)       => request(`/buses/${id}`, { method: "DELETE" }),
+    listar:     (skip = 0, limit = 50) => request(`/buses?skip=${skip}&limit=${limit}`),
+    obtener:    (id)                   => request(`/buses/${id}`),
+    crear:      (data)                 => request("/buses",       { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id, data)             => request(`/buses/${id}`, { method: "PUT",  body: JSON.stringify(data) }),
+    eliminar:   (id)                   => request(`/buses/${id}`, { method: "DELETE" }),
   },
   conductores: {
-    listar:     ()         => request("/conductores"),
-    crear:      (data)     => request("/conductores",       { method: "POST", body: JSON.stringify(data) }),
-    actualizar: (id, data) => request(`/conductores/${id}`, { method: "PUT",  body: JSON.stringify(data) }),
-    eliminar:   (id)       => request(`/conductores/${id}`, { method: "DELETE" }),
+    listar:     (skip = 0, limit = 50) => request(`/conductores?skip=${skip}&limit=${limit}`),
+    obtener:    (id)                   => request(`/conductores/${id}`),
+    crear:      (data)                 => request("/conductores",       { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id, data)             => request(`/conductores/${id}`, { method: "PUT",  body: JSON.stringify(data) }),
+    eliminar:   (id)                   => request(`/conductores/${id}`, { method: "DELETE" }),
   },
   turnos: {
     listar:  (fecha) => request(`/turnos${fecha ? `?fecha=${fecha}` : ""}`),
@@ -57,8 +69,9 @@ export const api = {
       return request(`/ingresos?${q.toString()}`);
     },
     resumen:  ()     => request("/ingresos/resumen"),
-    crear:    (data) => request("/ingresos", { method: "POST", body: JSON.stringify(data) }),
-    eliminar: (id)   => request(`/ingresos/${id}`, { method: "DELETE" }),
+    crear:      (data)     => request("/ingresos",       { method: "POST",   body: JSON.stringify(data) }),
+    actualizar: (id, data) => request(`/ingresos/${id}`, { method: "PUT",    body: JSON.stringify(data) }),
+    eliminar:   (id)       => request(`/ingresos/${id}`, { method: "DELETE" }),
     importarCSV: async (file, cols = {}) => {
       const token = localStorage.getItem("token");
       const form  = new FormData();

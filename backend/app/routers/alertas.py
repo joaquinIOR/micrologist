@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import date
@@ -131,6 +131,49 @@ async def obtener_alertas(
         "alertas":  sum(1 for a in alertas if a["nivel"] == "alerta"),
         "items":    alertas,
     }
+
+@router.post("/enviar-automatico")
+async def enviar_alertas_automatico(
+    background_tasks: BackgroundTasks,
+    db:               AsyncSession = Depends(get_db),
+    x_cron_secret:    str | None   = Header(default=None),
+):
+    """Endpoint para cron job diario. Protegido por CRON_SECRET en header X-Cron-Secret."""
+    cron_secret = os.getenv("CRON_SECRET")
+    if not cron_secret or x_cron_secret != cron_secret:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
+    from app.models.usuario import Usuario
+    usuarios_r = await db.execute(
+        select(Usuario).where(Usuario.activo == True, Usuario.telefono.isnot(None))
+    )
+    usuarios = usuarios_r.scalars().all()
+
+    enviados = 0
+    for usuario in usuarios:
+        buses_r = await db.execute(select(Bus).where(Bus.owner_id == usuario.id))
+        cond_r  = await db.execute(select(Conductor).where(Conductor.owner_id == usuario.id))
+
+        alertas = []
+        for bus in buses_r.scalars().all():
+            alertas.extend(construir_alertas_bus(bus))
+        for conductor in cond_r.scalars().all():
+            alertas.extend(construir_alertas_conductor(conductor))
+
+        if not alertas:
+            continue
+
+        resumen  = f"🚌 *MicroLogist — Alertas del día*\nHola {usuario.nombre},\n\n"
+        for a in alertas:
+            resumen += f"{a['mensaje']}\n"
+            if a.get("multa_estimada"):
+                resumen += f"   💸 Multa estimada: ${a['multa_estimada']:,} CLP\n"
+        resumen += "\nIngresa a tu dashboard para más detalles."
+
+        background_tasks.add_task(enviar_whatsapp, usuario.telefono, resumen)
+        enviados += 1
+
+    return {"ok": True, "usuarios_notificados": enviados}
 
 @router.post("/enviar-whatsapp")
 async def enviar_alertas_whatsapp(

@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
@@ -37,10 +37,14 @@ class ConductorResponse(BaseModel):
     vencimiento_licencia: Optional[date]
     estado:               EstadoConductor
     notas:                Optional[str]
-    semaforo_licencia:    str  # ok | alerta | critico | sin_fecha
+    semaforo_licencia:    str
 
     class Config:
         from_attributes = True
+
+class ConductorListResponse(BaseModel):
+    total: int
+    items: list[ConductorResponse]
 
 def calcular_semaforo_licencia(fecha: Optional[date]) -> str:
     if not fecha:
@@ -57,13 +61,17 @@ def conductor_to_response(c: Conductor) -> dict:
     return {**c.__dict__, "semaforo_licencia": calcular_semaforo_licencia(c.vencimiento_licencia)}
 
 # --- Endpoints ---
-@router.get("/", response_model=list[ConductorResponse])
+@router.get("/", response_model=ConductorListResponse)
 async def listar_conductores(
+    skip:    int          = Query(0, ge=0),
+    limit:   int          = Query(50, ge=1, le=200),
     db:      AsyncSession = Depends(get_db),
     current: Usuario      = Depends(get_current_user),
 ):
-    result = await db.execute(select(Conductor).where(Conductor.owner_id == current.id))
-    return [conductor_to_response(c) for c in result.scalars().all()]
+    base  = select(Conductor).where(Conductor.owner_id == current.id)
+    total = (await db.execute(select(func.count()).select_from(base.subquery()))).scalar()
+    conductores = (await db.execute(base.offset(skip).limit(limit))).scalars().all()
+    return {"total": total, "items": [conductor_to_response(c) for c in conductores]}
 
 @router.post("/", response_model=ConductorResponse, status_code=status.HTTP_201_CREATED)
 async def crear_conductor(

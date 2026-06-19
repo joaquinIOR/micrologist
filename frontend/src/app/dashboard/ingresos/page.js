@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 
+const INGRESO_VACIO = { bus_id: "", fecha: "", recorrido: "", total_pasajeros: "", monto: "", notas: "" };
+
 export default function Ingresos() {
   const [resumen, setResumen]   = useState(null);
   const [ingresos, setIngresos] = useState([]);
@@ -10,10 +12,13 @@ export default function Ingresos() {
   const [loading, setLoading]   = useState(true);
   const [importando, setImportando] = useState(false);
   const [mensaje, setMensaje]   = useState("");
+  const [editando, setEditando] = useState(null);   // ingreso siendo editado
+  const [editForm, setEditForm] = useState(INGRESO_VACIO);
+  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     cargarDatos();
-    api.buses.listar().then(setBuses).catch(console.error);
+    api.buses.listar().then(r => setBuses(r.items)).catch(console.error);
   }, []);
 
   const cargarDatos = async (f = {}) => {
@@ -65,11 +70,95 @@ export default function Ingresos() {
     }
   };
 
+  const abrirEdicion = (ing) => {
+    setEditando(ing.id);
+    setEditForm({
+      bus_id:          ing.bus_id          ?? "",
+      fecha:           ing.fecha           ?? "",
+      recorrido:       ing.recorrido       ?? "",
+      total_pasajeros: ing.total_pasajeros ?? "",
+      monto:           ing.monto           ?? "",
+      notas:           ing.notas           ?? "",
+    });
+  };
+
+  const guardarEdicion = async () => {
+    setGuardando(true);
+    try {
+      const payload = {
+        ...editForm,
+        bus_id:          editForm.bus_id          ? parseInt(editForm.bus_id)          : null,
+        total_pasajeros: editForm.total_pasajeros ? parseInt(editForm.total_pasajeros) : null,
+        monto:           parseFloat(editForm.monto),
+        fecha:           editForm.fecha,
+      };
+      await api.ingresos.actualizar(editando, payload);
+      setEditando(null);
+      cargarDatos();
+    } catch (err) {
+      setMensaje(`❌ ${err.message}`);
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   const fmt = (n) => `$${Math.round(n).toLocaleString("es-CL")}`;
   const input = { padding: "0.5rem 0.8rem", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 13, outline: "none" };
+  const inputModal = { width: "100%", padding: "0.6rem 0.8rem", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" };
 
   return (
     <main style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff", fontFamily: "sans-serif", padding: "2rem" }}>
+
+      {/* Modal edición */}
+      {editando && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ background: "#0f1420", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "1.5rem", width: "100%", maxWidth: 480 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.2rem" }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Editar ingreso</h2>
+              <button onClick={() => setEditando(null)} style={{ background: "transparent", border: "none", color: "#6b7280", fontSize: 20, cursor: "pointer" }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ color: "#9ca3af", fontSize: 12, display: "block", marginBottom: 4 }}>Fecha</label>
+                  <input style={inputModal} type="date" value={editForm.fecha} onChange={e => setEditForm(f => ({ ...f, fecha: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={{ color: "#9ca3af", fontSize: 12, display: "block", marginBottom: 4 }}>Monto ($)</label>
+                  <input style={inputModal} type="number" value={editForm.monto} onChange={e => setEditForm(f => ({ ...f, monto: e.target.value }))} />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label style={{ color: "#9ca3af", fontSize: 12, display: "block", marginBottom: 4 }}>Bus</label>
+                  <select style={{ ...inputModal, cursor: "pointer" }} value={editForm.bus_id} onChange={e => setEditForm(f => ({ ...f, bus_id: e.target.value }))}>
+                    <option value="">Sin bus</option>
+                    {buses.map(b => <option key={b.id} value={b.id}>{b.patente}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ color: "#9ca3af", fontSize: 12, display: "block", marginBottom: 4 }}>Pasajeros</label>
+                  <input style={inputModal} type="number" value={editForm.total_pasajeros} onChange={e => setEditForm(f => ({ ...f, total_pasajeros: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: 12, display: "block", marginBottom: 4 }}>Recorrido</label>
+                <input style={inputModal} value={editForm.recorrido} onChange={e => setEditForm(f => ({ ...f, recorrido: e.target.value }))} placeholder="Viña - Quilpué" />
+              </div>
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: 12, display: "block", marginBottom: 4 }}>Notas</label>
+                <input style={inputModal} value={editForm.notas} onChange={e => setEditForm(f => ({ ...f, notas: e.target.value }))} placeholder="Observaciones..." />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                <button onClick={() => setEditando(null)} style={{ flex: 1, padding: "0.75rem", background: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#6b7280", cursor: "pointer" }}>Cancelar</button>
+                <button onClick={guardarEdicion} disabled={guardando} style={{ flex: 2, padding: "0.75rem", background: "linear-gradient(135deg, #f97316, #ea580c)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, cursor: "pointer", opacity: guardando ? 0.7 : 1 }}>
+                  {guardando ? "Guardando..." : "Guardar cambios"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
 
         {/* Header */}
@@ -181,7 +270,10 @@ export default function Ingresos() {
                       </span>
                     </td>
                     <td style={{ padding: "1rem 1.5rem" }}>
-                      <button onClick={() => eliminar(ing.id)} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 6, color: "#f87171", fontSize: 12, cursor: "pointer" }}>🗑</button>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => abrirEdicion(ing)} style={{ padding: "4px 10px", background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)", borderRadius: 6, color: "#f97316", fontSize: 12, cursor: "pointer" }}>✏️</button>
+                        <button onClick={() => eliminar(ing.id)} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 6, color: "#f87171", fontSize: 12, cursor: "pointer" }}>🗑</button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -13,6 +13,7 @@ export default function Perfil() {
   const [loading, setLoading] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [error, setError]     = useState("");
+  const [toast, setToast]     = useState("");
 
   useEffect(() => {
     api.perfil.obtener().then(p => {
@@ -55,7 +56,8 @@ export default function Perfil() {
     }
     try {
       const res = await api.alertas.enviarWhatsApp();
-      alert(res.mensaje);
+      setToast(res.mensaje);
+      setTimeout(() => setToast(""), 4000);
     } catch (err) {
       setError(err.message);
     }
@@ -74,6 +76,9 @@ export default function Perfil() {
         )}
         {guardado && (
           <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 8, padding: "0.75rem", color: "#34d399", fontSize: 13, marginBottom: "1rem" }}>✅ Perfil actualizado correctamente</div>
+        )}
+        {toast && (
+          <div style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.3)", borderRadius: 8, padding: "0.75rem", color: "#25d366", fontSize: 13, marginBottom: "1rem" }}>📱 {toast}</div>
         )}
 
         <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>

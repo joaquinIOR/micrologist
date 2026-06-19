@@ -11,7 +11,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres
 if DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=os.getenv("DEBUG", "false").lower() == "true")
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):
@@ -26,5 +26,5 @@ async def get_db() -> AsyncSession:
 
 async def create_tables():
     async with engine.begin() as conn:
-        from app.models import bus, conductor, usuario  # noqa
+        from app.models import bus, conductor, usuario, turno, ingreso  # noqa
         await conn.run_sync(Base.metadata.create_all)

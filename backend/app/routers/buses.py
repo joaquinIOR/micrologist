@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from pydantic import BaseModel
 from datetime import date, datetime, timedelta
 from typing import Optional
@@ -41,10 +41,14 @@ class BusResponse(BaseModel):
     permiso_circulacion: Optional[date]
     estado:              EstadoBus
     notas:               Optional[str]
-    semaforo:            str   # calculado: ok | alerta | critico
+    semaforo:            str
 
     class Config:
         from_attributes = True
+
+class BusListResponse(BaseModel):
+    total: int
+    items: list[BusResponse]
 
 def calcular_semaforo(fecha: Optional[date]) -> str:
     """Calcula el estado semáforo según días hasta el vencimiento."""
@@ -73,14 +77,17 @@ def bus_to_response(bus: Bus) -> dict:
     return {**bus.__dict__, "semaforo": semaforo}
 
 # --- Endpoints ---
-@router.get("/", response_model=list[BusResponse])
+@router.get("/", response_model=BusListResponse)
 async def listar_buses(
+    skip:    int          = Query(0, ge=0),
+    limit:   int          = Query(50, ge=1, le=200),
     db:      AsyncSession = Depends(get_db),
     current: Usuario      = Depends(get_current_user),
 ):
-    result = await db.execute(select(Bus).where(Bus.owner_id == current.id))
-    buses  = result.scalars().all()
-    return [bus_to_response(b) for b in buses]
+    base  = select(Bus).where(Bus.owner_id == current.id)
+    total = (await db.execute(select(func.count()).select_from(base.subquery()))).scalar()
+    buses = (await db.execute(base.offset(skip).limit(limit))).scalars().all()
+    return {"total": total, "items": [bus_to_response(b) for b in buses]}
 
 @router.post("/", response_model=BusResponse, status_code=status.HTTP_201_CREATED)
 async def crear_bus(

@@ -22,9 +22,7 @@ function EditarBusForm() {
 
   useEffect(() => {
     if (!id) { window.location.href = "/dashboard"; return; }
-    api.buses.listar().then(buses => {
-      const bus = buses.find(b => b.id === parseInt(id));
-      if (!bus) { window.location.href = "/dashboard"; return; }
+    api.buses.obtener(id).then(bus => {
       setForm({
         patente:             bus.patente             || "",
         marca:               bus.marca               || "",
@@ -37,7 +35,7 @@ function EditarBusForm() {
         notas:               bus.notas               || "",
       });
       setCargando(false);
-    });
+    }).catch(() => { window.location.href = "/dashboard"; });
   }, [id]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));

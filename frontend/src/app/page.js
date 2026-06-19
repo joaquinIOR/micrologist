@@ -179,7 +179,7 @@ export default function Landing() {
           <a href="/registro" style={{ color: "#6b7280", textDecoration: "none" }}>Crear cuenta</a>
           <a href={whatsappLink("Hola, tengo una consulta sobre MicroLogist")} target="_blank" style={{ color: "#6b7280", textDecoration: "none" }}>Contacto</a>
         </div>
-        <p style={{ color: "#374151", fontSize: 12, marginTop: "1rem" }}>© 2025 MicroLogist · Viña del Mar, Chile</p>
+        <p style={{ color: "#374151", fontSize: 12, marginTop: "1rem" }}>© 2026 MicroLogist · Viña del Mar, Chile</p>
       </footer>
     </main>
   );

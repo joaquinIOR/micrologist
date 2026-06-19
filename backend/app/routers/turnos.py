@@ -81,6 +81,18 @@ async def crear_turno(
 ):
     await validate_ownership(db, current.id, data.bus_id, data.conductor_id)
 
+    bus_dup = await db.execute(
+        select(Turno).where(Turno.bus_id == data.bus_id, Turno.fecha == data.fecha, Turno.tipo == data.tipo)
+    )
+    if bus_dup.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Este bus ya tiene un turno asignado en esa fecha y tipo")
+
+    cond_dup = await db.execute(
+        select(Turno).where(Turno.conductor_id == data.conductor_id, Turno.fecha == data.fecha, Turno.tipo == data.tipo)
+    )
+    if cond_dup.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Este conductor ya tiene un turno asignado en esa fecha y tipo")
+
     turno = Turno(**data.model_dump())
     db.add(turno)
     await db.commit()

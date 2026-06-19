@@ -21,9 +21,7 @@ function EditarConductorForm() {
 
   useEffect(() => {
     if (!id) { window.location.href = "/dashboard"; return; }
-    api.conductores.listar().then(conductores => {
-      const c = conductores.find(c => c.id === parseInt(id));
-      if (!c) { window.location.href = "/dashboard"; return; }
+    api.conductores.obtener(id).then(c => {
       setForm({
         nombre:               c.nombre               || "",
         rut:                  c.rut                  || "",
@@ -35,7 +33,7 @@ function EditarConductorForm() {
         notas:                c.notas                || "",
       });
       setCargando(false);
-    });
+    }).catch(() => { window.location.href = "/dashboard"; });
   }, [id]);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));

@@ -40,14 +40,6 @@ class IngresoResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Helpers ---
-async def get_bus_patente(db: AsyncSession, bus_id: Optional[int]) -> Optional[str]:
-    if not bus_id:
-        return None
-    result = await db.execute(select(Bus).where(Bus.id == bus_id))
-    bus = result.scalar_one_or_none()
-    return bus.patente if bus else None
-
 # --- Endpoints ---
 @router.get("/", response_model=list[IngresoResponse])
 async def listar_ingresos(
@@ -65,13 +57,16 @@ async def listar_ingresos(
     if bus_id:
         query = query.where(Ingreso.bus_id == bus_id)
     query = query.order_by(Ingreso.fecha.desc())
-    result = await db.execute(query)
+    result  = await db.execute(query)
     ingresos = result.scalars().all()
-    items = []
-    for i in ingresos:
-        patente = await get_bus_patente(db, i.bus_id)
-        items.append({**i.__dict__, "bus_patente": patente})
-    return items
+
+    bus_ids = list({i.bus_id for i in ingresos if i.bus_id})
+    patentes: dict[int, str] = {}
+    if bus_ids:
+        buses_r = await db.execute(select(Bus.id, Bus.patente).where(Bus.id.in_(bus_ids)))
+        patentes = {row[0]: row[1] for row in buses_r.all()}
+
+    return [{**i.__dict__, "bus_patente": patentes.get(i.bus_id)} for i in ingresos]
 
 @router.get("/resumen")
 async def resumen_ingresos(
@@ -127,6 +122,11 @@ async def crear_ingreso(
     db:      AsyncSession = Depends(get_db),
     current: Usuario      = Depends(get_current_user),
 ):
+    if data.bus_id:
+        bus_r = await db.execute(select(Bus).where(Bus.id == data.bus_id, Bus.owner_id == current.id))
+        if not bus_r.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Bus no encontrado")
+
     ingreso = Ingreso(**data.model_dump(), owner_id=current.id, fuente=FuenteIngreso.manual)
     db.add(ingreso)
     await db.commit()
@@ -198,6 +198,38 @@ async def importar_csv(
         "errores":    errores,
         "mensaje":    f"{importados} registros importados correctamente"
     }
+
+@router.put("/{ingreso_id}", response_model=IngresoResponse)
+async def actualizar_ingreso(
+    ingreso_id: int,
+    data:       IngresoCreate,
+    db:         AsyncSession = Depends(get_db),
+    current:    Usuario      = Depends(get_current_user),
+):
+    result  = await db.execute(select(Ingreso).where(Ingreso.id == ingreso_id, Ingreso.owner_id == current.id))
+    ingreso = result.scalar_one_or_none()
+    if not ingreso:
+        raise HTTPException(status_code=404, detail="Ingreso no encontrado")
+
+    if data.bus_id and data.bus_id != ingreso.bus_id:
+        bus_r = await db.execute(select(Bus).where(Bus.id == data.bus_id, Bus.owner_id == current.id))
+        if not bus_r.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="Bus no encontrado")
+
+    for field, value in data.model_dump(exclude_none=True).items():
+        setattr(ingreso, field, value)
+
+    await db.commit()
+    await db.refresh(ingreso)
+
+    patente: dict[int, str] = {}
+    if ingreso.bus_id:
+        buses_r = await db.execute(select(Bus.id, Bus.patente).where(Bus.id == ingreso.bus_id))
+        row = buses_r.first()
+        if row:
+            patente = {row[0]: row[1]}
+
+    return {**ingreso.__dict__, "bus_patente": patente.get(ingreso.bus_id)}
 
 @router.delete("/{ingreso_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def eliminar_ingreso(

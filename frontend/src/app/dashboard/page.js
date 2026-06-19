@@ -87,17 +87,22 @@ function IngresosPreview() {
 export default function Dashboard() {
   const [tab, setTab]                 = useState("flota");
   const [buses, setBuses]             = useState([]);
+  const [busesTotal, setBusesTotal]   = useState(0);
+  const [busPage, setBusPage]         = useState(0);
   const [conductores, setConductores] = useState([]);
+  const [condTotal, setCondTotal]     = useState(0);
+  const [condPage, setCondPage]       = useState(0);
   const [alertas, setAlertas]         = useState(null);
   const [usuario, setUsuario]         = useState(null);
   const [loading, setLoading]         = useState(true);
   const [isMobile, setIsMobile]       = useState(false);
+  const PAGE_SIZE = 50;
 
   useEffect(() => {
     const u = localStorage.getItem("usuario");
     if (!u) { window.location.href = "/"; return; }
     setUsuario(JSON.parse(u));
-    cargarDatos();
+    cargarDatos(busPage, condPage);
 
     // Detectar mobile
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -106,17 +111,19 @@ export default function Dashboard() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const cargarDatos = async () => {
+  const cargarDatos = async (bPage = 0, cPage = 0) => {
     setLoading(true);
     try {
       const [b, c, a] = await Promise.all([
-        api.buses.listar(),
-        api.conductores.listar(),
+        api.buses.listar(bPage * PAGE_SIZE, PAGE_SIZE),
+        api.conductores.listar(cPage * PAGE_SIZE, PAGE_SIZE),
         api.alertas.obtener(),
       ]);
-      setBuses(b); setConductores(c); setAlertas(a);
+      setBuses(b.items); setBusesTotal(b.total);
+      setConductores(c.items); setCondTotal(c.total);
+      setAlertas(a);
     } catch (err) {
-      if (err.message.includes("401")) { window.location.href = "/"; }
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -138,6 +145,20 @@ export default function Dashboard() {
 
   const titles = { flota: "Mi Flota", conductores: "Conductores", turnos: "Turnos", ingresos: "Ingresos", alertas: "Alertas" };
   const btnEditar = { padding: "4px 10px", background: "rgba(249,115,22,0.15)", border: "1px solid rgba(249,115,22,0.3)", borderRadius: 6, color: "#f97316", fontSize: 12, fontWeight: 600, cursor: "pointer", textDecoration: "none" };
+
+  const Paginacion = ({ page, total, onPrev, onNext }) => {
+    if (total <= PAGE_SIZE) return null;
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.75rem 1.5rem", borderTop: "1px solid rgba(255,255,255,0.07)", fontSize: 13, color: "#6b7280" }}>
+        <span>{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} de {total}</span>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={onPrev} disabled={page === 0} style={{ padding: "4px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: page === 0 ? "#374151" : "#9ca3af", cursor: page === 0 ? "default" : "pointer" }}>← Anterior</button>
+          <button onClick={onNext} disabled={page >= totalPages - 1} style={{ padding: "4px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: page >= totalPages - 1 ? "#374151" : "#9ca3af", cursor: page >= totalPages - 1 ? "default" : "pointer" }}>Siguiente →</button>
+        </div>
+      </div>
+    );
+  };
 
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#0a0e1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -222,6 +243,11 @@ export default function Dashboard() {
                 </tbody>
               </table>
             )}
+            <Paginacion
+              page={busPage} total={busesTotal}
+              onPrev={() => { const p = busPage - 1; setBusPage(p); cargarDatos(p, condPage); }}
+              onNext={() => { const p = busPage + 1; setBusPage(p); cargarDatos(p, condPage); }}
+            />
           </div>
         )
       )}
@@ -280,6 +306,11 @@ export default function Dashboard() {
                 </tbody>
               </table>
             )}
+            <Paginacion
+              page={condPage} total={condTotal}
+              onPrev={() => { const p = condPage - 1; setCondPage(p); cargarDatos(busPage, p); }}
+              onNext={() => { const p = condPage + 1; setCondPage(p); cargarDatos(busPage, p); }}
+            />
           </div>
         )
       )}

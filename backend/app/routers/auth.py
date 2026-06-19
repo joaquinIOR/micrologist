@@ -1,11 +1,40 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr
+from datetime import datetime, timedelta
+from collections import defaultdict
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.usuario import Usuario
-from app.auth import hash_password, verify_password, create_access_token
+from app.auth import hash_password, verify_password, create_access_token, create_reset_token, decode_reset_token
+from twilio.rest import Client
+from dotenv import load_dotenv
+import os
+
+_intentos: dict[str, list[datetime]] = defaultdict(list)
+
+def _check_rate_limit(ip: str):
+    ahora   = datetime.utcnow()
+    ventana = ahora - timedelta(minutes=5)
+    _intentos[ip] = [t for t in _intentos[ip] if t > ventana]
+    if len(_intentos[ip]) >= 5:
+        raise HTTPException(status_code=429, detail="Demasiados intentos. Espera 5 minutos.")
+    _intentos[ip].append(ahora)
+
+load_dotenv()
+
+def _enviar_whatsapp(telefono: str, mensaje: str):
+    sid   = os.getenv("TWILIO_ACCOUNT_SID")
+    token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_ = os.getenv("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
+    if not sid or not token:
+        print(f"[WhatsApp simulado] → {telefono}: {mensaje}")
+        return
+    try:
+        Client(sid, token).messages.create(body=mensaje, from_=from_, to=f"whatsapp:{telefono}")
+    except Exception as e:
+        print(f"Error enviando WhatsApp: {e}")
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -55,7 +84,9 @@ async def registro(data: RegistroSchema, db: AsyncSession = Depends(get_db)):
     }
 
 @router.post("/login", response_model=TokenResponse)
-async def login(data: LoginSchema, db: AsyncSession = Depends(get_db)):
+async def login(data: LoginSchema, request: Request, db: AsyncSession = Depends(get_db)):
+    _check_rate_limit(request.client.host)
+
     result = await db.execute(select(Usuario).where(Usuario.email == data.email))
     user   = result.scalar_one_or_none()
 
@@ -65,6 +96,7 @@ async def login(data: LoginSchema, db: AsyncSession = Depends(get_db)):
     if not user.activo:
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
 
+    _intentos.pop(request.client.host, None)  # login exitoso → resetear contador
     token = create_access_token({"sub": str(user.id)})
     return {
         "access_token": token,
@@ -109,3 +141,61 @@ async def actualizar_perfil(
         "ciudad":   current.ciudad,
         "telefono": current.telefono,
     }
+
+# --- Recuperación de contraseña ---
+
+class RecuperarSchema(BaseModel):
+    email: EmailStr
+
+class NuevaPasswordSchema(BaseModel):
+    token:    str
+    password: str
+
+@router.post("/recuperar")
+async def recuperar_password(
+    data:             RecuperarSchema,
+    background_tasks: BackgroundTasks,
+    db:               AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Usuario).where(Usuario.email == data.email))
+    user   = result.scalar_one_or_none()
+
+    # Siempre responde igual para no revelar si el email existe
+    respuesta = {"ok": True, "mensaje": "Si el correo está registrado, recibirás el link por WhatsApp"}
+
+    if not user or not user.activo or not user.telefono:
+        return respuesta
+
+    token     = create_reset_token({"sub": str(user.id), "ph": user.password[-8:]})
+    frontend  = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    reset_url = f"{frontend}/reset?token={token}"
+    mensaje   = (
+        f"🔑 *MicroLogist — Recuperar contraseña*\n\n"
+        f"Hola {user.nombre}, haz clic en este link para crear una nueva contraseña:\n"
+        f"{reset_url}\n\n"
+        f"_Expira en 1 hora. Si no lo solicitaste, ignora este mensaje._"
+    )
+    background_tasks.add_task(_enviar_whatsapp, user.telefono, mensaje)
+    return respuesta
+
+@router.post("/nueva-password")
+async def nueva_password(
+    data: NuevaPasswordSchema,
+    db:   AsyncSession = Depends(get_db),
+):
+    payload = decode_reset_token(data.token)
+    if not payload:
+        raise HTTPException(status_code=400, detail="Token inválido o expirado")
+
+    result = await db.execute(select(Usuario).where(Usuario.id == int(payload["sub"])))
+    user   = result.scalar_one_or_none()
+
+    if not user or user.password[-8:] != payload.get("ph"):
+        raise HTTPException(status_code=400, detail="Token inválido o ya utilizado")
+
+    if len(data.password) < 6:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
+
+    user.password = hash_password(data.password)
+    await db.commit()
+    return {"ok": True, "mensaje": "Contraseña actualizada correctamente"}

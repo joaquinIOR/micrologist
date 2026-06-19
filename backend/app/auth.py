@@ -30,3 +30,17 @@ def decode_token(token: str) -> Optional[dict]:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
+
+RESET_SECRET          = SECRET_KEY + "-reset"
+RESET_EXPIRE_MINUTES  = 60
+
+def create_reset_token(data: dict) -> str:
+    to_encode = {**data, "exp": datetime.utcnow() + timedelta(minutes=RESET_EXPIRE_MINUTES), "type": "reset"}
+    return jwt.encode(to_encode, RESET_SECRET, algorithm=ALGORITHM)
+
+def decode_reset_token(token: str) -> Optional[dict]:
+    try:
+        payload = jwt.decode(token, RESET_SECRET, algorithms=[ALGORITHM])
+        return payload if payload.get("type") == "reset" else None
+    except JWTError:
+        return None

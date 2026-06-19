@@ -16,8 +16,8 @@ export default function NuevoTurno() {
   const [error, setError]     = useState("");
 
   useEffect(() => {
-    api.buses.listar().then(setBuses).catch(console.error);
-    api.conductores.listar().then(setConductores).catch(console.error);
+    api.buses.listar().then(r => setBuses(r.items)).catch(console.error);
+    api.conductores.listar().then(r => setConductores(r.items)).catch(console.error);
   }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
