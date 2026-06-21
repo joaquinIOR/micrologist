@@ -78,10 +78,13 @@ export default function Login() {
           </p>
 
           {error && (
-            <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.75rem 1rem", color: "#f87171", fontSize: 13, marginBottom: "1rem" }}>
-              {error}
+            <div style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.5)", borderRadius: 10, padding: "0.9rem 1rem 0.9rem 1.1rem", color: "#fca5a5", fontSize: 13, marginBottom: "1rem", display: "flex", gap: 10, alignItems: "flex-start", animation: "shake 0.35s ease" }}>
+              <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠</span>
+              <span style={{ lineHeight: 1.5 }}>{error}</span>
             </div>
           )}
+
+          <style>{`@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }`}</style>
 
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "#9ca3af", fontSize: 13, display: "block", marginBottom: 6, fontWeight: 500 }}>Correo electrónico</label>

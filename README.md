@@ -1,124 +1,219 @@
-# 🚌 MicroLogist — MVP
+# MicroLogist
 
-Plataforma de gestión de flotas para transporte urbano.
-Desarrollado en Viña del Mar, Chile.
+Plataforma SaaS de gestión de flotas de transporte urbano. Desarrollada en Viña del Mar, Chile como proyecto de título DuocUC.
+
+**Deploy:** [micrologist.vercel.app](https://micrologist.vercel.app) · API: `https://micrologist.ddns.net`
 
 ---
 
-## Estructura del Proyecto
+## Stack
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | Next.js 14 (App Router) · React 18 |
+| Backend | FastAPI (Python 3.11) · Uvicorn |
+| Base de datos | PostgreSQL 15 |
+| Auth | JWT (HS256) · Argon2 |
+| Mensajería | Twilio WhatsApp API |
+| Servidor | Oracle Cloud A1 ARM (Always Free) · Nginx |
+| Deploy frontend | Vercel |
+
+---
+
+## Estructura
 
 ```
 micrologist/
-├── backend/       → FastAPI + Python
-└── frontend/      → Next.js
+├── backend/                    # FastAPI
+│   ├── main.py
+│   ├── requirements.txt
+│   └── app/
+│       ├── auth.py             # Argon2 + JWT
+│       ├── database.py         # SQLAlchemy async + asyncpg
+│       ├── dependencies.py     # get_current_user
+│       ├── models/
+│       │   ├── usuario.py      # Multi-tenant base
+│       │   ├── bus.py
+│       │   ├── conductor.py
+│       │   ├── turno.py
+│       │   ├── ingreso.py
+│       │   └── audit_log.py    # Registro de acciones admin
+│       └── routers/
+│           ├── auth.py         # /auth — registro, login, perfil, recuperar
+│           ├── buses.py        # /buses — CRUD + semáforo
+│           ├── conductores.py  # /conductores — CRUD + semáforo licencia
+│           ├── turnos.py       # /turnos — CRUD + filtro por fecha
+│           ├── alertas.py      # /alertas — cálculo + WhatsApp
+│           ├── ingresos.py     # /ingresos — CRUD + CSV + resumen
+│           ├── reportes.py     # /reportes — PDF con fpdf2
+│           └── admin.py        # /admin — usuarios, planes, audit log
+│
+├── frontend/
+│   └── src/
+│       ├── lib/api.js          # Cliente HTTP centralizado
+│       └── app/
+│           ├── page.js         # Landing
+│           ├── login/
+│           ├── registro/
+│           ├── recuperar/
+│           ├── reset/
+│           ├── admin/
+│           └── dashboard/      # Módulos: buses, conductores, turnos, ingresos, alertas, perfil
+│
+└── deploy/
+    ├── 1_setup.sh              # Ubuntu: dependencias, PostgreSQL, Python venv
+    ├── 2_service.sh            # systemd service para FastAPI
+    └── 3_nginx.sh              # Nginx reverse proxy + Certbot SSL
 ```
 
 ---
 
-## 🐍 Backend (FastAPI)
+## Correr en local
 
-### Requisitos
-- Python 3.11+
-- PostgreSQL 15+
-
-### Instalación
+### Backend
 
 ```bash
 cd backend
 
-# 1. Crear entorno virtual
-python -m venv venv
-source venv/bin/activate        # Mac/Linux
-venv\Scripts\activate           # Windows
+python -m venv .venv
+source .venv/bin/activate        # Linux/Mac
+.venv\Scripts\activate           # Windows
 
-# 2. Instalar dependencias
 pip install -r requirements.txt
 
-# 3. Configurar variables de entorno
-cp .env.example .env
-# Edita .env con tus datos de PostgreSQL y Twilio
-
-# 4. Crear base de datos en PostgreSQL
+# Crear base de datos
 createdb micrologist
 
-# 5. Iniciar servidor
+# Variables de entorno
+cp .env.example .env
+# Editar .env (ver sección Variables de entorno)
+
 uvicorn main:app --reload --port 8000
 ```
 
-### Documentación API
-Una vez iniciado, visita:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc:       http://localhost:8000/redoc
+Docs disponibles en: http://localhost:8000/docs
 
----
-
-## ⚛️ Frontend (Next.js)
-
-### Requisitos
-- Node.js 18+
-- npm o yarn
-
-### Instalación
+### Frontend
 
 ```bash
 cd frontend
 
-# 1. Crear proyecto Next.js (solo primera vez)
-npx create-next-app@latest . --typescript --tailwind --app --src-dir --no-eslint
+npm install
 
-# 2. Copiar los archivos src/ de este repositorio
+# Variables de entorno
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 
-# 3. Configurar variables de entorno
-cp .env.local.example .env.local
-
-# 4. Iniciar servidor de desarrollo
 npm run dev
 ```
 
-El frontend estará disponible en http://localhost:3000
+Frontend en: http://localhost:3000
 
 ---
 
-## 🗄️ Modelos de Base de Datos
+## Variables de entorno
 
-| Tabla        | Descripción                          |
-|--------------|--------------------------------------|
-| usuarios     | Dueños de flotas (autenticación)     |
-| buses        | Vehículos con fechas de vencimiento  |
-| conductores  | Conductores con licencias            |
-| turnos       | Asignación conductor ↔ bus por fecha |
+### Backend (`.env`)
 
----
+```env
+DATABASE_URL=postgresql+asyncpg://usuario:password@localhost/micrologist
+SECRET_KEY=clave-secreta-larga-y-aleatoria
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+FRONTEND_URL=https://micrologist.vercel.app
+ADMIN_EMAIL=j.orellanacan@gmail.com
+```
 
-## 🔔 Alertas WhatsApp
+### Frontend (`.env.local`)
 
-Las alertas se envían via Twilio WhatsApp API.
-Para desarrollo, usa el Sandbox de Twilio (gratuito).
-Instrucciones: https://www.twilio.com/docs/whatsapp/sandbox
-
----
-
-## 🚀 Deploy en Railway
-
-1. Crear cuenta en railway.app
-2. Nuevo proyecto → Deploy from GitHub
-3. Agregar PostgreSQL como servicio
-4. Configurar variables de entorno
-5. Deploy automático en cada push
+```env
+NEXT_PUBLIC_API_URL=https://micrologist.ddns.net
+```
 
 ---
 
-## 📋 Endpoints principales
+## Deploy en Oracle Cloud
 
-| Método | Ruta                          | Descripción               |
-|--------|-------------------------------|---------------------------|
-| POST   | /auth/registro                | Registro de usuario       |
-| POST   | /auth/login                   | Login → JWT token         |
-| GET    | /buses                        | Listar buses              |
-| POST   | /buses                        | Crear bus                 |
-| GET    | /conductores                  | Listar conductores        |
-| POST   | /conductores                  | Crear conductor           |
-| GET    | /turnos?fecha=2025-05-06      | Turnos por fecha          |
-| POST   | /turnos                       | Crear turno               |
-| GET    | /alertas                      | Ver alertas activas       |
-| POST   | /alertas/enviar-whatsapp      | Enviar alertas por WA     |
+```bash
+# 1. En el servidor (Ubuntu 22.04 ARM)
+sudo bash deploy/1_setup.sh
+
+# 2. Configurar .env en /opt/micrologist/backend/.env
+
+# 3. Servicio systemd
+sudo bash deploy/2_service.sh
+
+# 4. Nginx + SSL (requiere dominio apuntando al servidor)
+sudo bash deploy/3_nginx.sh micrologist.ddns.net
+
+# 5. Actualizar
+cd /opt/micrologist && sudo git pull && sudo systemctl restart micrologist
+```
+
+---
+
+## Endpoints principales
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/auth/registro` | Registro → JWT + seed de datos de ejemplo |
+| POST | `/auth/login` | Login → JWT |
+| GET | `/auth/perfil` | Perfil del usuario autenticado |
+| PUT | `/auth/perfil` | Actualizar nombre/empresa/ciudad/teléfono |
+| POST | `/auth/recuperar` | Envía link de recuperación por WhatsApp |
+| POST | `/auth/nueva-password` | Resetea contraseña con token |
+| GET | `/buses` | Listar buses con semáforo de documentos |
+| POST | `/buses` | Crear bus |
+| PUT | `/buses/{id}` | Actualizar bus |
+| DELETE | `/buses/{id}` | Eliminar bus |
+| GET | `/conductores` | Listar conductores con semáforo de licencia |
+| POST | `/conductores` | Crear conductor |
+| GET | `/turnos?fecha=YYYY-MM-DD` | Turnos del día |
+| POST | `/turnos` | Asignar conductor a bus |
+| GET | `/alertas` | Alertas activas (buses + conductores) |
+| POST | `/alertas/enviar-whatsapp` | Enviar resumen por WhatsApp |
+| GET | `/ingresos` | Listar ingresos con filtros |
+| POST | `/ingresos` | Registrar ingreso |
+| GET | `/ingresos/resumen` | Totales hoy / semana / mes |
+| POST | `/ingresos/importar-csv` | Importar ingresos desde CSV |
+| GET | `/reportes/pdf` | Generar reporte PDF |
+| GET | `/admin/stats` | Estadísticas globales (admin) |
+| GET | `/admin/usuarios` | Listar usuarios (admin) |
+| PUT | `/admin/usuarios/{id}/plan` | Cambiar plan (admin) |
+| DELETE | `/admin/usuarios/{id}` | Eliminar usuario (admin) |
+| GET | `/admin/audit` | Log de acciones admin |
+
+---
+
+## Modelos de datos
+
+| Tabla | Descripción |
+|-------|-------------|
+| `usuarios` | Dueños de flotas. Campo `plan`: gratis/basico/pro |
+| `buses` | Vehículos con RT, SOAP y permiso de circulación |
+| `conductores` | Conductores con tipo y vencimiento de licencia |
+| `turnos` | Asignación conductor ↔ bus por fecha y tipo |
+| `ingresos` | Ingresos diarios por bus y recorrido |
+| `audit_logs` | Registro de acciones del panel admin |
+
+Aislamiento multi-tenant: todas las tablas tienen `owner_id` (FK a `usuarios`). Cada query filtra por `owner_id == current_user.id`.
+
+---
+
+## Sistema semáforo
+
+Estado calculado en tiempo real (nunca guardado en BD):
+
+```
+días hasta vencimiento → estado
+  < 0          → CRITICO   (rojo)
+  0 a 30       → ALERTA    (amarillo)
+  > 30         → OK        (verde)
+  sin fecha    → SIN_FECHA (gris)
+```
+
+Multas estimadas por documento vencido: RT $230.000 · SOAP $150.000 · Permiso $100.000 · Licencia $200.000 CLP.
+
+---
+
+*Proyecto de Título — DuocUC · Melanie Orellana · 2026*

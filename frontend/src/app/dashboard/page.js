@@ -176,8 +176,11 @@ export default function Dashboard() {
   };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#0a0e1a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ color: "#6b7280" }}>Cargando...</div>
+    <div style={{ minHeight: "100vh", background: "#0a0e1a", padding: "1.5rem" }}>
+      <style>{`@keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }`}</style>
+      {[...Array(5)].map((_, i) => (
+        <div key={i} style={{ height: i === 0 ? 32 : 72, borderRadius: 12, marginBottom: "1rem", background: "linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)", backgroundSize: "800px 100%", animation: "shimmer 1.4s infinite linear" }} />
+      ))}
     </div>
   );
 

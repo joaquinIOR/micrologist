@@ -82,7 +82,7 @@ Las siguientes funcionalidades quedan fuera del alcance del MVP:
 | No hay mapa de recorridos ni integración con GPS | Requiere integración con APIs de geolocalización fuera del alcance del proyecto de título. |
 | ~~No hay recuperación de contraseña funcional~~ | **Implementado en v1.0**: `/auth/recuperar` genera token firmado y lo envía por WhatsApp vía Twilio. `/auth/nueva-password` valida el token y actualiza la contraseña con Argon2. |
 | Sin autenticación con proveedores externos (Google, etc.) | Solo login con email y contraseña. |
-| Sin historial de cambios (auditoría) | No se registra quién modificó qué ni cuándo (más allá de `created_at` y `updated_at`). |
+| ~~Sin historial de cambios (auditoría)~~ | **Implementado en v1.0**: panel admin registra en `audit_logs` cada acción crítica (cambio de plan, eliminación de usuario) con admin_email, ip y timestamp. |
 
 ---
 
@@ -217,6 +217,11 @@ Se utilizó una metodología **iterativa e incremental**, con entregas funcional
 │   │ tipo_tarifa│              │  hora_ini   │              │
 │   │ fuente     │              │  hora_fin   │              │
 │   └────────────┘              └─────────────┘              │
+│                                                              │
+│   ┌────────────────────────────────────────────────────┐   │
+│   │  AuditLog  (sin owner_id — tabla global de admin)  │   │
+│   │  admin_email · accion · detalle · ip · created_at  │   │
+│   └────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────┘
 
 Relaciones:
@@ -226,6 +231,7 @@ Relaciones:
   - Bus 1:N Turno          (un bus tiene muchos turnos)
   - Conductor 1:N Turno    (un conductor tiene muchos turnos)
   - Bus 1:N Ingreso        (un bus tiene muchos ingresos)
+  - AuditLog: tabla independiente, no vinculada a Usuario por FK
 ```
 
 ---
@@ -246,14 +252,17 @@ micrologist/
 │       │   ├── bus.py
 │       │   ├── conductor.py
 │       │   ├── turno.py
-│       │   └── ingreso.py
+│       │   ├── ingreso.py
+│       │   └── audit_log.py    # Registro de acciones admin
 │       └── routers/            # Endpoints + Pydantic schemas
-│           ├── auth.py         # /auth/registro /login /perfil
+│           ├── auth.py         # /auth — registro (+ seed datos), login, perfil, recuperar
 │           ├── buses.py        # /buses CRUD + semáforo
 │           ├── conductores.py  # /conductores CRUD + semáforo licencia
 │           ├── turnos.py       # /turnos CRUD + filtro fecha
 │           ├── alertas.py      # /alertas cálculo + WhatsApp
-│           └── ingresos.py     # /ingresos CRUD + CSV + resumen
+│           ├── ingresos.py     # /ingresos CRUD + CSV + resumen
+│           ├── reportes.py     # /reportes/pdf — PDF con fpdf2
+│           └── admin.py        # /admin — usuarios, planes, audit log
 │
 └── frontend/                   # Next.js 14 / App Router
     └── src/
@@ -264,6 +273,8 @@ micrologist/
             ├── login/
             ├── registro/
             ├── recuperar/
+            ├── reset/          # /reset?token=... — nueva contraseña
+            ├── admin/          # Panel admin (solo j.orellanacan@gmail.com)
             └── dashboard/
                 ├── page.js     # Dashboard principal (tabs)
                 ├── buses/      # nuevo/ editar/
@@ -310,31 +321,33 @@ Flujo de alertas WhatsApp (asíncrono):
                        │
           ┌────────────┼────────────┐
           │                         │
-   ┌──────▼──────┐         ┌────────▼────────┐
-   │   Vercel    │         │    Railway      │
-   │  (Frontend) │         │   (Backend)     │
-   │             │         │                 │
-   │  Next.js    │◄───────►│  FastAPI        │
-   │  CDN global │  HTTPS  │  Uvicorn        │
-   │  .vercel.app│  REST   │  .railway.app   │
-   └─────────────┘         └────────┬────────┘
-                                    │ asyncpg
+   ┌──────▼──────┐         ┌────────────────────────────────────┐
+   │   Vercel    │         │  Oracle Cloud A1 ARM (Always Free) │
+   │  (Frontend) │         │  4 OCPUs · 24 GB RAM · Ubuntu 22  │
+   │             │         │                                    │
+   │  Next.js    │◄───────►│  Nginx (:80/:443) → FastAPI (:8000)│
+   │  CDN global │  HTTPS  │  systemd · Let's Encrypt SSL       │
+   │  .vercel.app│  REST   │  micrologist.ddns.net              │
+   └─────────────┘         └────────┬───────────────────────────┘
+                                    │ asyncpg (localhost)
                            ┌────────▼────────┐
                            │  PostgreSQL 15  │
-                           │  (Railway DB)   │
+                           │  (mismo server) │
                            └─────────────────┘
-                                    
+
                            ┌─────────────────┐
                            │  Twilio API     │
                            │  (WhatsApp)     │
                            └─────────────────┘
 
-Variables de entorno (Railway):
+                    crontab 08:00 → POST /alertas/enviar-automatico
+
+Variables de entorno (Oracle Cloud — /opt/micrologist/backend/.env):
   DATABASE_URL, SECRET_KEY, TWILIO_ACCOUNT_SID,
-  TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM, FRONTEND_URL
+  TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM, FRONTEND_URL, ADMIN_EMAIL
 
 Variables de entorno (Vercel):
-  NEXT_PUBLIC_API_URL
+  NEXT_PUBLIC_API_URL=https://micrologist.ddns.net
 ```
 
 ---
@@ -357,7 +370,8 @@ Variables de entorno (Vercel):
 | **Next.js** | 14 | Framework React con App Router. Permite rutas file-based y rendering híbrido. |
 | **React** | 18 | Biblioteca UI para construir componentes reactivos del dashboard. |
 | **Tailwind CSS** | 3 | Utilidades CSS para estilos. Usado junto con estilos inline para el dark theme del dashboard. |
-| **Railway** | — | Plataforma de deploy del backend y la base de datos PostgreSQL. |
+| **Oracle Cloud** | A1 ARM | Servidor de producción: Ubuntu 22.04, 4 OCPUs ARM, 24 GB RAM. Plan Always Free. |
+| **Nginx** | 1.18 | Reverse proxy: recibe HTTPS (:443), redirige a FastAPI (:8000). SSL via Let's Encrypt / Certbot. |
 | **Vercel** | — | Plataforma de deploy del frontend Next.js. CDN global. |
 | **Git** | — | Control de versiones del proyecto. |
 
@@ -504,4 +518,56 @@ Todos los datos de entrada son validados automáticamente por Pydantic antes de 
 
 ---
 
-*Documentación generada en junio 2026 — MicroLogist MVP 0.1.0*
+---
+
+## 12. Seguridad
+
+### 12.1 Rate Limiting
+
+Implementado manualmente en `auth.py` (sin dependencias externas):
+
+| Endpoint | Límite |
+|----------|--------|
+| `POST /auth/login` | 5 intentos / 5 minutos por IP |
+| `POST /auth/registro` | 5 intentos / 10 minutos por IP |
+| `POST /auth/recuperar` | 3 intentos / 10 minutos por IP |
+
+Responde `HTTP 429` al superar el límite. La ventana deslizante se mantiene en memoria (dict en el proceso de Uvicorn), suficiente para el MVP.
+
+### 12.2 Headers de Seguridad (Nginx)
+
+```nginx
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+```
+
+### 12.3 Audit Log
+
+Cada acción crítica del panel admin queda registrada en la tabla `audit_logs`:
+
+| Campo | Descripción |
+|-------|-------------|
+| `admin_email` | Quién realizó la acción |
+| `accion` | `cambiar_plan` o `eliminar_usuario` |
+| `detalle` | Descripción legible de la acción |
+| `ip` | IP desde donde se realizó |
+| `created_at` | Timestamp UTC automático |
+
+---
+
+## 13. Onboarding — Datos de Ejemplo
+
+Al registrarse un nuevo usuario, el sistema crea automáticamente datos de ejemplo para que el dashboard no esté vacío en el primer login:
+
+- **4 buses** con estados semáforo variados (verde, amarillo, rojo, verde)
+- **3 conductores** con licencias en distintos estados de vencimiento
+- **Ingresos de los últimos 7 días** (lun–sáb) para los 4 buses, permitiendo visualizar el gráfico del módulo de ingresos desde el primer acceso
+
+Los datos usan patentes, marcas y recorridos reales de la región de Valparaíso.
+
+---
+
+*Documentación generada en junio 2026 — MicroLogist MVP 1.0*
