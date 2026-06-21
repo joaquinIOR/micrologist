@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from pydantic import BaseModel
 from app.database import get_db
 from app.dependencies import get_current_user
@@ -80,3 +80,22 @@ async def cambiar_plan(
     usuario.plan = data.plan
     await db.commit()
     return {"ok": True, "mensaje": f"Plan actualizado a {data.plan}"}
+
+@router.delete("/usuarios/{usuario_id}")
+async def eliminar_usuario(
+    usuario_id: int,
+    db:         AsyncSession = Depends(get_db),
+    current:    Usuario      = Depends(get_current_user),
+):
+    _verificar_admin(current)
+    if usuario_id == current.id:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta")
+    result  = await db.execute(select(Usuario).where(Usuario.id == usuario_id))
+    usuario = result.scalar_one_or_none()
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    # Ingreso no tiene cascade en el ORM → borrar manualmente
+    await db.execute(delete(Ingreso).where(Ingreso.owner_id == usuario_id))
+    await db.delete(usuario)  # cascadea buses, conductores, turnos
+    await db.commit()
+    return {"ok": True, "mensaje": f"Usuario {usuario.email} eliminado"}

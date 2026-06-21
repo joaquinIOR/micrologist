@@ -98,7 +98,8 @@ export const api = {
   admin: {
     stats:       ()             => request("/admin/stats"),
     usuarios:    ()             => request("/admin/usuarios"),
-    cambiarPlan: (id, plan)     => request(`/admin/usuarios/${id}/plan`, { method: "PUT", body: JSON.stringify({ plan }) }),
+    cambiarPlan:     (id, plan) => request(`/admin/usuarios/${id}/plan`, { method: "PUT", body: JSON.stringify({ plan }) }),
+    eliminarUsuario: (id)       => request(`/admin/usuarios/${id}`, { method: "DELETE" }),
   },
   reportes: {
     descargarPDF: async () => {

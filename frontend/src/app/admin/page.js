@@ -30,8 +30,9 @@ export default function AdminPanel() {
   const [usuarios, setUsuarios] = useState([]);
   const [error,    setError]    = useState("");
   const [toast,    setToast]    = useState("");
-  const [busqueda, setBusqueda] = useState("");
-  const [hoverId,  setHoverId]  = useState(null);
+  const [busqueda,   setBusqueda]   = useState("");
+  const [hoverId,    setHoverId]    = useState(null);
+  const [confirmar,  setConfirmar]  = useState(null); // { id, nombre, email }
 
   useEffect(() => {
     Promise.all([api.admin.stats(), api.admin.usuarios()])
@@ -44,6 +45,21 @@ export default function AdminPanel() {
         }
       });
   }, []);
+
+  const eliminarUsuario = async () => {
+    if (!confirmar) return;
+    try {
+      await api.admin.eliminarUsuario(confirmar.id);
+      setUsuarios(us => us.filter(u => u.id !== confirmar.id));
+      setStats(s => s ? { ...s, usuarios: s.usuarios - 1 } : s);
+      setToast(`Usuario ${confirmar.nombre} eliminado`);
+      setTimeout(() => setToast(""), 3000);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setConfirmar(null);
+    }
+  };
 
   const cambiarPlan = async (id, plan) => {
     try {
@@ -73,6 +89,36 @@ export default function AdminPanel() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff", padding: "2rem" }}>
+
+      {/* ── MODAL CONFIRMAR ELIMINACIÓN ── */}
+      {confirmar && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+          <div style={{ background: "#0d1220", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 16, padding: "2rem", maxWidth: 420, width: "100%" }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, marginBottom: "1.25rem" }}>
+              🗑
+            </div>
+            <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>¿Eliminar usuario?</h2>
+            <p style={{ color: "#9ca3af", fontSize: 14, lineHeight: 1.6, marginBottom: 6 }}>
+              Vas a eliminar permanentemente la cuenta de:
+            </p>
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "0.75rem 1rem", marginBottom: "1rem" }}>
+              <div style={{ fontWeight: 600, color: "#e5e7eb" }}>{confirmar.nombre}</div>
+              <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>{confirmar.email}</div>
+            </div>
+            <p style={{ fontSize: 12, color: "#ef4444", marginBottom: "1.5rem", lineHeight: 1.5 }}>
+              ⚠ Se eliminarán todos sus buses, conductores, turnos e ingresos. Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => setConfirmar(null)} style={{ flex: 1, padding: "0.75rem", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 9, color: "#d1d5db", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+                Cancelar
+              </button>
+              <button onClick={eliminarUsuario} style={{ flex: 1, padding: "0.75rem", background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.35)", borderRadius: 9, color: "#f87171", fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
+                Eliminar definitivamente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ maxWidth: 1080, margin: "0 auto" }}>
 
         {/* ── HEADER ── */}
@@ -146,7 +192,7 @@ export default function AdminPanel() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr>
-                  {["Usuario", "Empresa / Ciudad", "Flota", "Plan", "Registro"].map(h => (
+                  {["Usuario", "Empresa / Ciudad", "Flota", "Plan", "Registro", ""].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "0.6rem 1rem", color: "#4b5563", fontWeight: 600, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid rgba(255,255,255,0.06)", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -210,6 +256,19 @@ export default function AdminPanel() {
                     {/* Registro */}
                     <td style={{ padding: "0.85rem 1rem", color: "#4b5563", fontSize: 12, whiteSpace: "nowrap" }}>
                       {u.created_at ? new Date(u.created_at).toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                    </td>
+
+                    {/* Eliminar */}
+                    <td style={{ padding: "0.85rem 1rem" }}>
+                      <button
+                        onClick={() => setConfirmar({ id: u.id, nombre: u.nombre, email: u.email })}
+                        title="Eliminar usuario"
+                        style={{ background: "transparent", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 7, color: "#6b7280", padding: "5px 8px", cursor: "pointer", fontSize: 13, transition: "all 0.15s" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.color = "#f87171"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#6b7280"; e.currentTarget.style.borderColor = "rgba(239,68,68,0.2)"; }}
+                      >
+                        🗑
+                      </button>
                     </td>
                   </tr>
                 ))}
