@@ -55,6 +55,85 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── PRODUCT PREVIEW ────────────────────────────────────── */}
+      <section style={{ padding: "0 2rem 5rem" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <div style={{ background: "#0d1220", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, overflow: "hidden", boxShadow: "0 0 80px rgba(249,115,22,0.08)" }}>
+            {/* Browser chrome */}
+            <div style={{ background: "#070b14", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0.65rem 1.25rem", display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ width: 10, height: 10, borderRadius: 99, background: "#3f3f46" }} />
+                <div style={{ width: 10, height: 10, borderRadius: 99, background: "#3f3f46" }} />
+                <div style={{ width: 10, height: 10, borderRadius: 99, background: "#3f3f46" }} />
+              </div>
+              <div style={{ flex: 1, maxWidth: 260, margin: "0 auto", background: "rgba(255,255,255,0.05)", borderRadius: 6, padding: "3px 12px", fontSize: 11, color: "#6b7280", textAlign: "center" }}>
+                micrologist.vercel.app/dashboard
+              </div>
+            </div>
+            {/* Dashboard layout */}
+            <div style={{ display: "flex", minHeight: 320 }}>
+              {/* Sidebar */}
+              <div style={{ width: 160, borderRight: "1px solid rgba(255,255,255,0.07)", padding: "1rem 0.75rem", display: "flex", flexDirection: "column", gap: 3, flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: "1rem", padding: "0 0.25rem" }}>
+                  <div style={{ width: 22, height: 22, borderRadius: 6, background: "linear-gradient(135deg, #f97316, #ea580c)", flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, fontSize: 12, color: "#fff" }}>MicroLogist</span>
+                </div>
+                {[
+                  { label: "Mi Flota", active: true },
+                  { label: "Conductores", active: false },
+                  { label: "Turnos", active: false },
+                  { label: "Ingresos", active: false },
+                  { label: "Alertas (2)", active: false, warn: true },
+                ].map((item, i) => (
+                  <div key={i} style={{ padding: "0.35rem 0.6rem", borderRadius: 7, background: item.active ? "rgba(249,115,22,0.15)" : "transparent", color: item.active ? "#f97316" : item.warn ? "#fbbf24" : "#6b7280", fontSize: 11, fontWeight: item.active ? 600 : 400 }}>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+              {/* Content */}
+              <div style={{ flex: 1, padding: "1.25rem", overflow: "hidden" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, marginBottom: "0.9rem", color: "#fff" }}>Mi Flota</div>
+                {/* Stats */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: "1rem" }}>
+                  {[
+                    { label: "Total buses", value: "8", color: "#3b82f6" },
+                    { label: "Operativos",  value: "6", color: "#10b981" },
+                    { label: "Con alertas", value: "2", color: "#f59e0b" },
+                    { label: "Críticos",    value: "1", color: "#ef4444" },
+                  ].map((s, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.04)", borderLeft: `3px solid ${s.color}`, borderRadius: 8, padding: "0.6rem 0.7rem" }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+                      <div style={{ fontSize: 9, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 3 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Table */}
+                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, overflow: "hidden" }}>
+                  <div style={{ padding: "0.6rem 1rem", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#fff" }}>Vehículos registrados</span>
+                    <span style={{ fontSize: 10, color: "#f97316", fontWeight: 600 }}>+ Agregar bus</span>
+                  </div>
+                  {[
+                    { patente: "BCTK-21", modelo: "Mercedes OF-1721", color: "#34d399", bg: "rgba(16,185,129,0.12)",  label: "Al día" },
+                    { patente: "GFPR-43", modelo: "Volvo B8R",        color: "#fbbf24", bg: "rgba(245,158,11,0.12)", label: "Por vencer" },
+                    { patente: "RNWK-89", modelo: "Marcopolo G7",     color: "#f87171", bg: "rgba(239,68,68,0.12)",  label: "Vencido" },
+                  ].map((bus, i) => (
+                    <div key={i} style={{ padding: "0.55rem 1rem", borderTop: i > 0 ? "1px solid rgba(255,255,255,0.05)" : "none", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{bus.patente}</div>
+                        <div style={{ fontSize: 10, color: "#6b7280" }}>{bus.modelo}</div>
+                      </div>
+                      <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: bus.bg, color: bus.color, fontWeight: 600 }}>{bus.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <p style={{ textAlign: "center", color: "#374151", fontSize: 12, marginTop: "0.75rem" }}>Vista real del dashboard · Datos de ejemplo</p>
+        </div>
+      </section>
+
       {/* ── PROBLEMA ───────────────────────────────────────────── */}
       <section style={{ padding: "5rem 2rem", maxWidth: 1000, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: "3rem" }}>

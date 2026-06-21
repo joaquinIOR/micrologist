@@ -107,7 +107,7 @@ export default function Ingresos() {
   const inputModal = { width: "100%", padding: "0.6rem 0.8rem", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff", fontFamily: "sans-serif", padding: "2rem" }}>
+    <main style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff", padding: "2rem" }}>
 
       {/* Modal edición */}
       {editando && (
@@ -190,7 +190,7 @@ export default function Ingresos() {
               { label: "Semana", monto: resumen.semana?.monto, pasajeros: resumen.semana?.pasajeros, color: "#8b5cf6" },
               { label: "Mes",    monto: resumen.mes?.monto,    pasajeros: resumen.mes?.pasajeros,    color: "#10b981" },
             ].map((s, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "1.2rem" }}>
+              <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderLeft: `3px solid ${s.color}`, borderRadius: 14, padding: "1.2rem" }}>
                 <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.label}</div>
                 <div style={{ fontSize: 26, fontWeight: 700, color: s.color }}>{fmt(s.monto || 0)}</div>
                 <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>{s.pasajeros || 0} pasajeros</div>
