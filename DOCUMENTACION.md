@@ -80,7 +80,7 @@ Las siguientes funcionalidades quedan fuera del alcance del MVP:
 | ~~No hay generación de reportes PDF~~ | **Implementado en v1.0** con fpdf2: endpoint `/reportes/pdf` genera PDF con estado de flota e ingresos del mes. |
 | ~~Las alertas WhatsApp son manuales~~ | **Implementado en v1.0**: cron diario a las 08:00 en Oracle Cloud ejecuta `/alertas/enviar-automatico`. |
 | No hay mapa de recorridos ni integración con GPS | Requiere integración con APIs de geolocalización fuera del alcance del proyecto de título. |
-| No hay recuperación de contraseña funcional | La página `/recuperar` existe en el frontend pero el endpoint backend no está implementado. |
+| ~~No hay recuperación de contraseña funcional~~ | **Implementado en v1.0**: `/auth/recuperar` genera token firmado y lo envía por WhatsApp vía Twilio. `/auth/nueva-password` valida el token y actualiza la contraseña con Argon2. |
 | Sin autenticación con proveedores externos (Google, etc.) | Solo login con email y contraseña. |
 | Sin historial de cambios (auditoría) | No se registra quién modificó qué ni cuándo (más allá de `created_at` y `updated_at`). |
 

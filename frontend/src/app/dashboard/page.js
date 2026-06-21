@@ -9,6 +9,19 @@ const estadoColor = {
   sin_fecha:{ bg: "rgba(107,114,128,0.15)",text: "#9ca3af", label: "Sin fecha" },
 };
 
+const Icon = ({ d, size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {Array.isArray(d) ? d.map((p, i) => <path key={i} d={p} />) : <path d={d} />}
+  </svg>
+);
+
+const BusIcon    = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>;
+const UserIcon   = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const CalIcon    = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+const MoneyIcon  = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+const BellIcon   = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+const GearIcon   = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>;
+
 function Badge({ estado }) {
   const c = estadoColor[estado] || estadoColor.sin_fecha;
   return (
@@ -67,8 +80,8 @@ function IngresosPreview() {
               { label: "Semana", monto: resumen.semana?.monto, color: "#8b5cf6" },
               { label: "Mes",    monto: resumen.mes?.monto,    color: "#10b981" },
             ].map((s, i) => (
-              <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: "1rem", textAlign: "center" }}>
-                <div style={{ fontSize: 11, color: "#6b7280", textTransform: "uppercase", marginBottom: 4 }}>{s.label}</div>
+              <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderLeft: `3px solid ${s.color}`, borderRadius: 12, padding: "1rem", textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{s.label}</div>
                 <div style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{fmt(s.monto)}</div>
               </div>
             ))}
@@ -104,7 +117,6 @@ export default function Dashboard() {
     setUsuario(JSON.parse(u));
     cargarDatos(busPage, condPage);
 
-    // Detectar mobile
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -136,11 +148,11 @@ export default function Dashboard() {
   };
 
   const navItems = [
-    { id: "flota",       icon: "🚌", label: "Mi Flota" },
-    { id: "conductores", icon: "👨‍✈️", label: "Conductores" },
-    { id: "turnos",      icon: "📅", label: "Turnos" },
-    { id: "ingresos",    icon: "💰", label: "Ingresos" },
-    { id: "alertas",     icon: "🔔", label: `Alertas ${alertas?.total > 0 ? `(${alertas.total})` : ""}` },
+    { id: "flota",       icon: <BusIcon />,   label: "Mi Flota" },
+    { id: "conductores", icon: <UserIcon />,  label: "Conductores" },
+    { id: "turnos",      icon: <CalIcon />,   label: "Turnos" },
+    { id: "ingresos",    icon: <MoneyIcon />, label: "Ingresos" },
+    { id: "alertas",     icon: <BellIcon />,  label: `Alertas${alertas?.total > 0 ? ` (${alertas.total})` : ""}` },
   ];
 
   const titles = { flota: "Mi Flota", conductores: "Conductores", turnos: "Turnos", ingresos: "Ingresos", alertas: "Alertas" };
@@ -166,18 +178,26 @@ export default function Dashboard() {
     </div>
   );
 
-  // ── CONTENIDO COMPARTIDO ──────────────────────────────────────────
+  const statsDef = [
+    { label: isMobile ? "Buses" : "Total buses",   value: buses.length,                                  color: "#3b82f6" },
+    { label: isMobile ? "OK" : "Operativos",       value: buses.filter(b => b.semaforo === "ok").length, color: "#10b981" },
+    { label: isMobile ? "Alertas" : "Con alertas", value: alertas?.alertas  || 0,                        color: "#f59e0b" },
+    { label: "Críticos",                           value: alertas?.criticos || 0,                        color: "#ef4444" },
+  ];
+
   const stats = (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: isMobile ? 8 : "1rem", marginBottom: isMobile ? "0.75rem" : "2rem", padding: isMobile ? "0.75rem 1rem" : 0 }}>
-      {[
-        { label: isMobile ? "Buses" : "Total buses",   value: buses.length,                                  color: "#3b82f6" },
-        { label: isMobile ? "OK" : "Operativos",       value: buses.filter(b => b.semaforo === "ok").length, color: "#10b981" },
-        { label: isMobile ? "Alertas" : "Con alertas", value: alertas?.alertas  || 0,                        color: "#f59e0b" },
-        { label: "Críticos",                           value: alertas?.criticos || 0,                        color: "#ef4444" },
-      ].map((s, i) => (
-        <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: isMobile ? 10 : 14, padding: isMobile ? "0.7rem 0.4rem" : "1.2rem", textAlign: isMobile ? "center" : "left" }}>
-          <div style={{ fontSize: isMobile ? 20 : 28, fontWeight: 700, color: s.color }}>{s.value}</div>
-          <div style={{ fontSize: isMobile ? 10 : 13, color: "#6b7280", marginTop: 2 }}>{s.label}</div>
+      {statsDef.map((s, i) => (
+        <div key={i} style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.07)",
+          borderLeft: `3px solid ${s.color}`,
+          borderRadius: isMobile ? 10 : 14,
+          padding: isMobile ? "0.7rem 0.6rem" : "1.2rem",
+          textAlign: isMobile ? "center" : "left",
+        }}>
+          <div style={{ fontSize: isMobile ? 22 : 32, fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
+          <div style={{ fontSize: isMobile ? 9 : 11, color: "#6b7280", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div>
         </div>
       ))}
     </div>
@@ -185,7 +205,6 @@ export default function Dashboard() {
 
   const contenido = (
     <>
-      {/* Flota */}
       {tab === "flota" && (
         isMobile ? (
           <div style={{ padding: "0 1rem", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -225,7 +244,7 @@ export default function Dashboard() {
                 <thead>
                   <tr style={{ background: "rgba(255,255,255,0.02)" }}>
                     {["Patente", "Modelo", "Rev. Técnica", "SOAP", "Estado", ""].map(h => (
-                      <th key={h} style={{ padding: "0.9rem 1.5rem", textAlign: "left", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase" }}>{h}</th>
+                      <th key={h} style={{ padding: "0.9rem 1.5rem", textAlign: "left", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -252,7 +271,6 @@ export default function Dashboard() {
         )
       )}
 
-      {/* Conductores */}
       {tab === "conductores" && (
         isMobile ? (
           <div style={{ padding: "0 1rem", display: "flex", flexDirection: "column", gap: 8 }}>
@@ -289,7 +307,7 @@ export default function Dashboard() {
                 <thead>
                   <tr style={{ background: "rgba(255,255,255,0.02)" }}>
                     {["Nombre", "Licencia", "Vencimiento", "Estado", ""].map(h => (
-                      <th key={h} style={{ padding: "0.9rem 1.5rem", textAlign: "left", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase" }}>{h}</th>
+                      <th key={h} style={{ padding: "0.9rem 1.5rem", textAlign: "left", fontSize: 12, color: "#6b7280", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -315,7 +333,6 @@ export default function Dashboard() {
         )
       )}
 
-      {/* Turnos */}
       {tab === "turnos" && (
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, overflow: "hidden", margin: isMobile ? "0 1rem" : 0 }}>
           {!isMobile && (
@@ -328,7 +345,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Ingresos */}
       {tab === "ingresos" && (
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, overflow: "hidden", margin: isMobile ? "0 1rem" : 0 }}>
           {!isMobile && (
@@ -341,7 +357,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Alertas */}
       {tab === "alertas" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: isMobile ? "0 1rem" : 0 }}>
           {alertas?.items?.length === 0 && (
@@ -364,16 +379,18 @@ export default function Dashboard() {
     </>
   );
 
-  // ── MOBILE LAYOUT ─────────────────────────────────────────────────
+  // ── MOBILE ────────────────────────────────────────────────────────
   if (isMobile) return (
-    <div style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff", fontFamily: "sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff" }}>
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "#0a0e1a", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "0.9rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg, #f97316, #ea580c)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🚌</div>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg, #f97316, #ea580c)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <BusIcon size={16} />
+          </div>
           <span style={{ fontWeight: 700, fontSize: 15 }}>MicroLogist</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <a href="/dashboard/perfil" style={{ fontSize: 16, textDecoration: "none" }}>⚙️</a>
+          <a href="/dashboard/perfil" style={{ color: "#9ca3af", textDecoration: "none", display: "flex" }}><GearIcon size={18} /></a>
           <button onClick={cerrarSesion} style={{ fontSize: 12, color: "#6b7280", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 8px", cursor: "pointer" }}>Salir</button>
         </div>
       </div>
@@ -389,11 +406,11 @@ export default function Dashboard() {
         {contenido}
       </div>
 
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0f1420", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", zIndex: 100 }}>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0d1220", borderTop: "1px solid rgba(255,255,255,0.07)", display: "flex", zIndex: 100 }}>
         {navItems.map(item => (
-          <button key={item.id} onClick={() => setTab(item.id)} style={{ flex: 1, padding: "0.7rem 0.3rem", background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
-            <span style={{ fontSize: 9, color: tab === item.id ? "#f97316" : "#6b7280", fontWeight: tab === item.id ? 600 : 400 }}>{item.id === "alertas" && alertas?.total > 0 ? `🔔 (${alertas.total})` : item.label}</span>
+          <button key={item.id} onClick={() => setTab(item.id)} style={{ flex: 1, padding: "0.7rem 0.3rem", background: "transparent", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, color: tab === item.id ? "#f97316" : "#6b7280" }}>
+            {item.icon}
+            <span style={{ fontSize: 9, fontWeight: tab === item.id ? 600 : 400 }}>{item.label}</span>
             {tab === item.id && <div style={{ width: 16, height: 2, background: "#f97316", borderRadius: 99 }} />}
           </button>
         ))}
@@ -401,25 +418,31 @@ export default function Dashboard() {
     </div>
   );
 
-  // ── DESKTOP LAYOUT ────────────────────────────────────────────────
+  // ── DESKTOP ───────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff", fontFamily: "sans-serif", display: "flex" }}>
-      <div style={{ width: 220, background: "rgba(255,255,255,0.03)", borderRight: "1px solid rgba(255,255,255,0.07)", padding: "1.5rem 1rem", display: "flex", flexDirection: "column", position: "fixed", top: 0, bottom: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: "2.5rem" }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, #f97316, #ea580c)", display: "flex", alignItems: "center", justifyContent: "center" }}>🚌</div>
+    <div style={{ minHeight: "100vh", background: "#0a0e1a", color: "#fff", display: "flex" }}>
+      <div style={{ width: 220, background: "#0d1220", borderRight: "1px solid rgba(255,255,255,0.07)", padding: "1.5rem 1rem", display: "flex", flexDirection: "column", position: "fixed", top: 0, bottom: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "2.5rem" }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: "linear-gradient(135deg, #f97316, #ea580c)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <BusIcon size={18} />
+          </div>
           <span style={{ fontWeight: 700, fontSize: 15 }}>MicroLogist</span>
         </div>
         {navItems.map(item => (
           <button key={item.id} onClick={() => setTab(item.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.65rem 0.8rem", borderRadius: 10, border: "none", cursor: "pointer", marginBottom: 4, background: tab === item.id ? "rgba(249,115,22,0.15)" : "transparent", color: tab === item.id ? "#f97316" : "#6b7280", fontSize: 14, fontWeight: tab === item.id ? 600 : 400, textAlign: "left" }}>
-            <span>{item.icon}</span> {item.label}
+            {item.icon} {item.label}
           </button>
         ))}
         <div style={{ marginTop: "auto" }}>
           {usuario && (
-            <a href="/dashboard/perfil" style={{ display: "block", padding: "0.8rem", background: "rgba(255,255,255,0.04)", borderRadius: 12, marginBottom: "0.8rem", textDecoration: "none" }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{usuario.nombre}</div>
-              <div style={{ fontSize: 12, color: "#6b7280" }}>{usuario.empresa}</div>
-              <div style={{ fontSize: 11, color: "#f97316", marginTop: 4 }}>⚙️ Editar perfil</div>
+            <a href="/dashboard/perfil" style={{ display: "flex", alignItems: "center", gap: 10, padding: "0.8rem", background: "rgba(255,255,255,0.04)", borderRadius: 12, marginBottom: "0.8rem", textDecoration: "none" }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #f97316, #ea580c)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}>
+                <UserIcon size={16} />
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{usuario.nombre}</div>
+                <div style={{ fontSize: 11, color: "#6b7280" }}>{usuario.empresa}</div>
+              </div>
             </a>
           )}
           <button onClick={cerrarSesion} style={{ width: "100%", padding: "0.6rem", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#6b7280", fontSize: 13, cursor: "pointer" }}>Cerrar sesión</button>
@@ -428,7 +451,7 @@ export default function Dashboard() {
 
       <div style={{ marginLeft: 220, padding: "2rem", flex: 1 }}>
         <div style={{ marginBottom: "2rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>{titles[tab]}</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, letterSpacing: "-0.5px" }}>{titles[tab]}</h1>
           {tab === "flota"       && <a href="/dashboard/buses/nuevo"      style={{ padding: "0.5rem 1rem", background: "linear-gradient(135deg, #f97316, #ea580c)", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>+ Agregar bus</a>}
           {tab === "conductores" && <a href="/dashboard/conductores/nuevo" style={{ padding: "0.5rem 1rem", background: "linear-gradient(135deg, #f97316, #ea580c)", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>+ Agregar conductor</a>}
           {tab === "turnos"      && <a href="/dashboard/turnos/nuevo"      style={{ padding: "0.5rem 1rem", background: "linear-gradient(135deg, #f97316, #ea580c)", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>+ Asignar turno</a>}

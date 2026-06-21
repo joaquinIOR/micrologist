@@ -11,7 +11,7 @@ export default function Landing() {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   return (
-    <main style={{ background: "#0a0e1a", color: "#fff", fontFamily: "'DM Sans', sans-serif", overflowX: "hidden" }}>
+    <main style={{ background: "#0a0e1a", color: "#fff", overflowX: "hidden" }}>
 
       {/* ── NAVBAR ─────────────────────────────────────────────── */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: "rgba(10,14,26,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "1rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
