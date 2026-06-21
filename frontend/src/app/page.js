@@ -378,19 +378,136 @@ export default function Landing() {
             </div>
             <h2 style={{ fontSize: "clamp(1.5rem, 4vw, 2.4rem)", fontWeight: 700, letterSpacing: "-0.5px" }}>Todo en un solo lugar</h2>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.25rem" }}>
-            {[
-              { icon: "🔔", titulo: "Alertas por WhatsApp",     desc: "Avisos automáticos días antes de que venza la revisión técnica, SOAP, permisos y licencias." },
-              { icon: "🚌", titulo: "Control de flota",          desc: "Semáforo visual en tiempo real: verde, amarillo y rojo por cada documento de cada bus." },
-              { icon: "👨‍✈️", titulo: "Gestión de conductores",  desc: "Controla licencias, asigna turnos y sabe qué conductor maneja qué bus cada día." },
-              { icon: "💰", titulo: "Seguimiento de ingresos",   desc: "Registra la recaudación diaria por bus. Sabe qué recorrido rinde más." },
-            ].map((item, i) => (
-              <div key={i} className="card-hover" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "1.4rem" }}>
-                <div style={{ fontSize: 26, marginBottom: 12 }}>{item.icon}</div>
-                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 7, color: "#e5e7eb" }}>{item.titulo}</div>
-                <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>{item.desc}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.25rem" }}>
+
+            {/* Card 1: Alertas WhatsApp */}
+            <div className="card-hover" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+              <div style={{ background: "#080c18", borderBottom: "1px solid rgba(16,185,129,0.12)", padding: "1.1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: 99, background: "#22c55e" }} />
+                  <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>WhatsApp · MicroLogist Bot</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ alignSelf: "flex-start", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.18)", borderRadius: "10px 10px 10px 2px", padding: "7px 10px", maxWidth: "92%", fontSize: 10, color: "#d1d5db", lineHeight: 1.55 }}>
+                    <div style={{ fontSize: 9, color: "#10b981", fontWeight: 700, marginBottom: 3 }}>🔔 MicroLogist</div>
+                    Tu bus <strong>BCTK-21</strong> tiene la <span style={{ color: "#fbbf24" }}>Revisión Técnica</span> venciendo en <strong style={{ color: "#f97316" }}>28 días</strong>.<br />
+                    Renueva antes del 18 Jul para evitar multas.
+                    <div style={{ fontSize: 8, color: "#4b5563", marginTop: 4 }}>09:15 ✓✓</div>
+                  </div>
+                  <div style={{ alignSelf: "flex-end", background: "rgba(255,255,255,0.05)", borderRadius: "10px 10px 2px 10px", padding: "5px 10px", fontSize: 10, color: "#9ca3af" }}>
+                    Gracias, ya agendé 👍
+                    <div style={{ fontSize: 8, color: "#4b5563", marginTop: 2 }}>09:16 ✓</div>
+                  </div>
+                </div>
               </div>
-            ))}
+              <div style={{ padding: "1.1rem" }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>Alertas por WhatsApp</div>
+                <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>Avisos automáticos días antes de que venza la revisión técnica, SOAP, permisos y licencias.</div>
+              </div>
+            </div>
+
+            {/* Card 2: Control de flota */}
+            <div className="card-hover" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+              <div style={{ background: "#080c18", borderBottom: "1px solid rgba(59,130,246,0.1)", padding: "1.1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: 99, background: "#3b82f6" }} />
+                  <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>Mi Flota · Estado de documentos</span>
+                </div>
+                <div style={{ fontSize: 9, fontFamily: "monospace", display: "flex", flexDirection: "column", gap: 5 }}>
+                  {[
+                    { patente: "BCTK-21", rt: ["Al día",    "#10b981", "rgba(16,185,129,0.1)"],  soap: ["Al día",      "#10b981", "rgba(16,185,129,0.1)"]  },
+                    { patente: "GFPR-43", rt: ["28 días",   "#f59e0b", "rgba(245,158,11,0.1)"],  soap: ["Al día",      "#10b981", "rgba(16,185,129,0.1)"]  },
+                    { patente: "RNWK-89", rt: ["Vencido",   "#ef4444", "rgba(239,68,68,0.1)"],   soap: ["12 días",     "#f59e0b", "rgba(245,158,11,0.1)"]  },
+                    { patente: "LMPQ-02", rt: ["Al día",    "#10b981", "rgba(16,185,129,0.1)"],  soap: ["Vencido",     "#ef4444", "rgba(239,68,68,0.1)"]   },
+                  ].map((bus, i) => (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", alignItems: "center", background: "rgba(255,255,255,0.025)", borderRadius: 6, padding: "5px 8px" }}>
+                      <span style={{ color: "#d1d5db", fontWeight: 700 }}>{bus.patente}</span>
+                      <span style={{ padding: "2px 6px", borderRadius: 99, background: bus.rt[2], color: bus.rt[1], fontSize: 8, textAlign: "center" }}>RT: {bus.rt[0]}</span>
+                      <span style={{ padding: "2px 6px", borderRadius: 99, background: bus.soap[2], color: bus.soap[1], fontSize: 8, textAlign: "center" }}>SOAP: {bus.soap[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ padding: "1.1rem" }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>Control de flota</div>
+                <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>Semáforo visual en tiempo real: verde, amarillo y rojo por cada documento de cada bus.</div>
+              </div>
+            </div>
+
+            {/* Card 3: Gestión de conductores */}
+            <div className="card-hover" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+              <div style={{ background: "#080c18", borderBottom: "1px solid rgba(139,92,246,0.1)", padding: "1.1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: 99, background: "#8b5cf6" }} />
+                  <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>Turnos · Semana actual</span>
+                </div>
+                <div style={{ fontSize: 9, fontFamily: "monospace", display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 0.8fr 0.9fr 0.8fr", background: "rgba(255,255,255,0.04)", borderRadius: "5px 5px 0 0", padding: "4px 7px", color: "#4b5563" }}>
+                    {["Conductor","Bus","Turno","Licencia"].map(h => <span key={h}>{h}</span>)}
+                  </div>
+                  {[
+                    { nombre: "J. Pérez",    bus: "BCTK-21", turno: "06:00–14:00", lic: ["A3 · ok",  "#10b981", "rgba(16,185,129,0.1)"] },
+                    { nombre: "M. Rojas",    bus: "GFPR-43", turno: "14:00–22:00", lic: ["A3 · ok",  "#10b981", "rgba(16,185,129,0.1)"] },
+                    { nombre: "C. Fuentes",  bus: "RNWK-89", turno: "06:00–14:00", lic: ["A2 · 45d", "#f59e0b", "rgba(245,158,11,0.1)"] },
+                    { nombre: "R. Morales",  bus: "LMPQ-02", turno: "14:00–22:00", lic: ["A3 · ok",  "#10b981", "rgba(16,185,129,0.1)"] },
+                  ].map((c, i) => (
+                    <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 0.8fr 0.9fr 0.8fr", background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "4px 7px", alignItems: "center" }}>
+                      <span style={{ color: "#d1d5db" }}>{c.nombre}</span>
+                      <span style={{ color: "#9ca3af" }}>{c.bus}</span>
+                      <span style={{ color: "#6b7280" }}>{c.turno}</span>
+                      <span style={{ padding: "2px 5px", borderRadius: 99, background: c.lic[2], color: c.lic[1], fontSize: 8 }}>{c.lic[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ padding: "1.1rem" }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>Gestión de conductores</div>
+                <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>Controla licencias, asigna turnos y sabe qué conductor maneja qué bus cada día.</div>
+              </div>
+            </div>
+
+            {/* Card 4: Seguimiento de ingresos */}
+            <div className="card-hover" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+              <div style={{ background: "#080c18", borderBottom: "1px solid rgba(16,185,129,0.1)", padding: "1.1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: 99, background: "#10b981" }} />
+                    <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>Ingresos · Esta semana</span>
+                  </div>
+                  <span style={{ fontSize: 10, color: "#10b981", fontWeight: 700, fontFamily: "monospace" }}>$312.500</span>
+                </div>
+                {/* Mini bar chart */}
+                {(() => {
+                  const bars = [
+                    { dia: "Lun", val: 48500, pct: 78 },
+                    { dia: "Mar", val: 52000, pct: 84 },
+                    { dia: "Mié", val: 44000, pct: 71 },
+                    { dia: "Jue", val: 61000, pct: 98 },
+                    { dia: "Vie", val: 55000, pct: 89 },
+                    { dia: "Sáb", val: 52000, pct: 84 },
+                  ];
+                  return (
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 56, marginBottom: 6 }}>
+                      {bars.map((b, i) => (
+                        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3, height: "100%", justifyContent: "flex-end" }}>
+                          <div style={{ width: "100%", height: `${b.pct}%`, background: i === 3 ? "rgba(249,115,22,0.6)" : "rgba(16,185,129,0.35)", borderRadius: "3px 3px 0 0", border: `1px solid ${i === 3 ? "rgba(249,115,22,0.4)" : "rgba(16,185,129,0.3)"}` }} />
+                          <span style={{ fontSize: 8, color: "#4b5563", fontFamily: "monospace" }}>{b.dia}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, fontFamily: "monospace" }}>
+                  <span style={{ color: "#6b7280" }}>Mejor día: <span style={{ color: "#f97316" }}>Jue $61.000</span></span>
+                  <span style={{ color: "#6b7280" }}>↑ <span style={{ color: "#10b981" }}>12% vs semana anterior</span></span>
+                </div>
+              </div>
+              <div style={{ padding: "1.1rem" }}>
+                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>Seguimiento de ingresos</div>
+                <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>Registra la recaudación diaria por bus. Sabe qué recorrido rinde más.</div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
