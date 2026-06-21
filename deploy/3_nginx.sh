@@ -12,6 +12,14 @@ server {
     listen 80;
     server_name $DOMINIO;
 
+    # ── Security headers ──────────────────────────────────────────
+    add_header X-Frame-Options          "SAMEORIGIN"                       always;
+    add_header X-Content-Type-Options   "nosniff"                          always;
+    add_header X-XSS-Protection         "1; mode=block"                   always;
+    add_header Referrer-Policy          "strict-origin-when-cross-origin"  always;
+    add_header Permissions-Policy       "geolocation=(), microphone=(), camera=()" always;
+    # HSTS se activa solo después de instalar SSL (Certbot lo agrega)
+
     # Logs
     access_log /var/log/nginx/micrologist_access.log;
     error_log  /var/log/nginx/micrologist_error.log;
@@ -29,6 +37,12 @@ server {
         proxy_send_timeout 120s;
 
         # CORS ya lo maneja FastAPI, Nginx no lo toca
+        # Repetir headers aquí porque add_header en location overridea el bloque server
+        add_header X-Frame-Options          "SAMEORIGIN"                       always;
+        add_header X-Content-Type-Options   "nosniff"                          always;
+        add_header X-XSS-Protection         "1; mode=block"                   always;
+        add_header Referrer-Policy          "strict-origin-when-cross-origin"  always;
+        add_header Permissions-Policy       "geolocation=(), microphone=(), camera=()" always;
     }
 
     # Health check de Nginx

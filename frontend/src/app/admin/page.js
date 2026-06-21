@@ -32,11 +32,12 @@ export default function AdminPanel() {
   const [toast,    setToast]    = useState("");
   const [busqueda,   setBusqueda]   = useState("");
   const [hoverId,    setHoverId]    = useState(null);
-  const [confirmar,  setConfirmar]  = useState(null); // { id, nombre, email }
+  const [confirmar,  setConfirmar]  = useState(null);
+  const [auditLogs,  setAuditLogs]  = useState([]);
 
   useEffect(() => {
-    Promise.all([api.admin.stats(), api.admin.usuarios()])
-      .then(([s, u]) => { setStats(s); setUsuarios(u); })
+    Promise.all([api.admin.stats(), api.admin.usuarios(), api.admin.audit()])
+      .then(([s, u, a]) => { setStats(s); setUsuarios(u); setAuditLogs(a); })
       .catch(e => {
         if (e.message?.includes("403") || e.message?.includes("No autorizado")) {
           window.location.href = "/dashboard";
@@ -46,6 +47,8 @@ export default function AdminPanel() {
       });
   }, []);
 
+  const recargarAudit = () => api.admin.audit().then(setAuditLogs).catch(() => {});
+
   const eliminarUsuario = async () => {
     if (!confirmar) return;
     try {
@@ -54,6 +57,7 @@ export default function AdminPanel() {
       setStats(s => s ? { ...s, usuarios: s.usuarios - 1 } : s);
       setToast(`Usuario ${confirmar.nombre} eliminado`);
       setTimeout(() => setToast(""), 3000);
+      recargarAudit();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -67,6 +71,7 @@ export default function AdminPanel() {
       setUsuarios(us => us.map(u => u.id === id ? { ...u, plan } : u));
       setToast("Plan actualizado");
       setTimeout(() => setToast(""), 3000);
+      recargarAudit();
     } catch (e) {
       setError(e.message);
     }
@@ -275,6 +280,54 @@ export default function AdminPanel() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* ── AUDIT LOG ── */}
+        <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, marginTop: "1.5rem" }}>
+          <div style={{ padding: "1.1rem 1.4rem", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#e5e7eb" }}>Registro de actividad</div>
+              <div style={{ fontSize: 11, color: "#4b5563", marginTop: 2 }}>Últimas {auditLogs.length} acciones</div>
+            </div>
+            <button onClick={recargarAudit} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, padding: "5px 10px", color: "#6b7280", fontSize: 12, cursor: "pointer" }}>
+              Actualizar
+            </button>
+          </div>
+          {auditLogs.length === 0 ? (
+            <div style={{ padding: "2.5rem", textAlign: "center", color: "#374151", fontSize: 13 }}>
+              Sin actividad registrada aún
+            </div>
+          ) : (
+            <div style={{ padding: "0.5rem 1.4rem 0.75rem" }}>
+              {auditLogs.map((log, i) => {
+                const ACCION_STYLE = {
+                  cambiar_plan:     { color: "#f97316", label: "cambió plan",      emoji: "✏️" },
+                  eliminar_usuario: { color: "#ef4444", label: "eliminó usuario",  emoji: "🗑" },
+                };
+                const s = ACCION_STYLE[log.accion] || { color: "#9ca3af", label: log.accion, emoji: "·" };
+                const fecha = log.created_at
+                  ? new Date(log.created_at).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+                  : "—";
+                return (
+                  <div key={log.id} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "0.65rem 0", borderBottom: i < auditLogs.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 99, background: `${s.color}15`, border: `1px solid ${s.color}30`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, fontSize: 11 }}>
+                      {s.emoji}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, color: "#d1d5db", lineHeight: 1.5 }}>
+                        <span style={{ color: "#9ca3af" }}>{log.admin_email}</span>
+                        {" "}<span style={{ color: s.color, fontWeight: 600 }}>{s.label}</span>
+                        {log.detalle && <span style={{ color: "#6b7280" }}> — {log.detalle}</span>}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#374151", marginTop: 1 }}>
+                        {fecha}{log.ip && <span> · desde {log.ip}</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
       </div>

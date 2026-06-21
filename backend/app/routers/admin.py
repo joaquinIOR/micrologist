@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from pydantic import BaseModel
@@ -8,6 +8,7 @@ from app.models.usuario import Usuario, PLAN_LIMITES
 from app.models.bus import Bus
 from app.models.conductor import Conductor
 from app.models.ingreso import Ingreso
+from app.models.audit_log import AuditLog
 import os
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -18,6 +19,11 @@ def _verificar_admin(current: Usuario):
     admin_emails = [e.strip() for e in os.getenv("ADMIN_EMAIL", "").split(",") if e.strip()]
     if current.email not in admin_emails:
         raise HTTPException(status_code=403, detail="No autorizado")
+
+async def _log(db: AsyncSession, admin_email: str, accion: str, detalle: str, request: Request = None):
+    ip = request.client.host if request and request.client else None
+    db.add(AuditLog(admin_email=admin_email, accion=accion, detalle=detalle, ip=ip))
+    await db.commit()
 
 @router.get("/stats")
 async def stats(
@@ -52,6 +58,7 @@ async def listar_usuarios(
             "nombre":      u.nombre,
             "email":       u.email,
             "empresa":     u.empresa,
+            "ciudad":      u.ciudad,
             "plan":        u.plan,
             "activo":      u.activo,
             "buses":       buses_count,
@@ -67,6 +74,7 @@ class CambiarPlanSchema(BaseModel):
 async def cambiar_plan(
     usuario_id: int,
     data:       CambiarPlanSchema,
+    request:    Request,
     db:         AsyncSession = Depends(get_db),
     current:    Usuario      = Depends(get_current_user),
 ):
@@ -77,13 +85,17 @@ async def cambiar_plan(
     usuario = result.scalar_one_or_none()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    usuario.plan = data.plan
+    plan_anterior = usuario.plan
+    usuario.plan  = data.plan
     await db.commit()
+    await _log(db, current.email, "cambiar_plan",
+               f"{usuario.email}: {plan_anterior} → {data.plan}", request)
     return {"ok": True, "mensaje": f"Plan actualizado a {data.plan}"}
 
 @router.delete("/usuarios/{usuario_id}")
 async def eliminar_usuario(
     usuario_id: int,
+    request:    Request,
     db:         AsyncSession = Depends(get_db),
     current:    Usuario      = Depends(get_current_user),
 ):
@@ -94,8 +106,32 @@ async def eliminar_usuario(
     usuario = result.scalar_one_or_none()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    # Ingreso no tiene cascade en el ORM → borrar manualmente
+    email_eliminado = usuario.email
+    nombre_eliminado = usuario.nombre
     await db.execute(delete(Ingreso).where(Ingreso.owner_id == usuario_id))
-    await db.delete(usuario)  # cascadea buses, conductores, turnos
+    await db.delete(usuario)
     await db.commit()
-    return {"ok": True, "mensaje": f"Usuario {usuario.email} eliminado"}
+    await _log(db, current.email, "eliminar_usuario",
+               f"{nombre_eliminado} ({email_eliminado})", request)
+    return {"ok": True, "mensaje": f"Usuario {email_eliminado} eliminado"}
+
+@router.get("/audit")
+async def listar_audit(
+    db:      AsyncSession = Depends(get_db),
+    current: Usuario      = Depends(get_current_user),
+):
+    _verificar_admin(current)
+    logs = (await db.execute(
+        select(AuditLog).order_by(AuditLog.created_at.desc()).limit(100)
+    )).scalars().all()
+    return [
+        {
+            "id":          l.id,
+            "admin_email": l.admin_email,
+            "accion":      l.accion,
+            "detalle":     l.detalle,
+            "ip":          l.ip,
+            "created_at":  l.created_at.isoformat() if l.created_at else None,
+        }
+        for l in logs
+    ]

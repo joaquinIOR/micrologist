@@ -100,6 +100,7 @@ export const api = {
     usuarios:    ()             => request("/admin/usuarios"),
     cambiarPlan:     (id, plan) => request(`/admin/usuarios/${id}/plan`, { method: "PUT", body: JSON.stringify({ plan }) }),
     eliminarUsuario: (id)       => request(`/admin/usuarios/${id}`, { method: "DELETE" }),
+    audit:           ()         => request("/admin/audit"),
   },
   reportes: {
     descargarPDF: async () => {
