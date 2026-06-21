@@ -15,7 +15,10 @@ const Icon = ({ d, size = 16 }) => (
   </svg>
 );
 
+const ADMIN_EMAIL = "j.orellanacan@gmail.com";
+
 const BusIcon    = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>;
+const ShieldIcon = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 const UserIcon   = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
 const CalIcon    = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
 const MoneyIcon  = ({ size }) => <svg width={size||16} height={size||16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
@@ -390,6 +393,11 @@ export default function Dashboard() {
           <span style={{ fontWeight: 700, fontSize: 15 }}>MicroLogist</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {usuario?.email === ADMIN_EMAIL && (
+            <a href="/admin" style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.25)", borderRadius: 6, color: "#a78bfa", fontSize: 11, fontWeight: 600, textDecoration: "none" }}>
+              <ShieldIcon size={12} /> Admin
+            </a>
+          )}
           <a href="/dashboard/perfil" style={{ color: "#9ca3af", textDecoration: "none", display: "flex" }}><GearIcon size={18} /></a>
           <button onClick={cerrarSesion} style={{ fontSize: 12, color: "#6b7280", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "4px 8px", cursor: "pointer" }}>Salir</button>
         </div>
@@ -443,6 +451,11 @@ export default function Dashboard() {
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#fff" }}>{usuario.nombre}</div>
                 <div style={{ fontSize: 11, color: "#6b7280" }}>{usuario.empresa}</div>
               </div>
+            </a>
+          )}
+          {usuario?.email === ADMIN_EMAIL && (
+            <a href="/admin" style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "0.6rem 0.8rem", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: 8, color: "#a78bfa", fontSize: 13, fontWeight: 600, textDecoration: "none", marginBottom: 8, boxSizing: "border-box" }}>
+              <ShieldIcon size={14} /> Panel Admin
             </a>
           )}
           <button onClick={cerrarSesion} style={{ width: "100%", padding: "0.6rem", background: "transparent", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "#6b7280", fontSize: 13, cursor: "pointer" }}>Cerrar sesión</button>
