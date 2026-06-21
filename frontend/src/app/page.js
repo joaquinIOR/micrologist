@@ -240,19 +240,131 @@ export default function Landing() {
           </div>
           <h2 style={{ fontSize: "clamp(1.5rem, 4vw, 2.4rem)", fontWeight: 700, letterSpacing: "-0.5px" }}>¿Te ha pasado esto?</h2>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.25rem" }}>
-          {[
-            { emoji: "😰", titulo: "Multa inesperada",        desc: "Tu bus sale con la revisión técnica vencida. Multa de $230.000 y el bus parado." },
-            { emoji: "📋", titulo: "El Excel se perdió",      desc: "Alguien lo modificó, se corrompió o nadie lo actualizó desde hace meses." },
-            { emoji: "📞", titulo: "Aviso de último minuto",   desc: "Te enteras que la licencia de un conductor venció cuando ya está manejando." },
-            { emoji: "❓", titulo: "Sin visibilidad",          desc: "No sabes cuánto recaudó cada bus hoy, ni qué recorrido es más rentable." },
-          ].map((item, i) => (
-            <div key={i} className="card-hover" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "1.4rem" }}>
-              <div style={{ fontSize: 26, marginBottom: 12 }}>{item.emoji}</div>
-              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 7, color: "#e5e7eb" }}>{item.titulo}</div>
-              <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>{item.desc}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.25rem" }}>
+
+          {/* Card 1: Multa inesperada */}
+          <div className="card-hover" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, overflow: "hidden" }}>
+            <div style={{ background: "#080c18", borderBottom: "1px solid rgba(239,68,68,0.15)", padding: "1.1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <div style={{ width: 6, height: 6, borderRadius: 99, background: "#ef4444" }} />
+                <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>SEREMITT · Fiscalización vial</span>
+              </div>
+              <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: 8, padding: "0.75rem", fontSize: 10, fontFamily: "monospace", display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#6b7280" }}>Vehículo</span>
+                  <span style={{ color: "#d1d5db", fontWeight: 700 }}>BCTK-21</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#6b7280" }}>Revisión Técnica</span>
+                  <span style={{ color: "#ef4444", fontWeight: 700 }}>VENCIDA ✕</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "#6b7280" }}>Multa</span>
+                  <span style={{ color: "#ef4444", fontWeight: 700 }}>$230.000</span>
+                </div>
+                <div style={{ marginTop: 2, padding: "5px 8px", background: "rgba(239,68,68,0.12)", borderRadius: 5, textAlign: "center", color: "#f87171", fontSize: 9, letterSpacing: "0.04em" }}>
+                  Bus detenido hasta regularizar documentos
+                </div>
+              </div>
             </div>
-          ))}
+            <div style={{ padding: "1.1rem" }}>
+              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>Multa inesperada</div>
+              <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>Tu bus sale con la revisión técnica vencida. Multa de $230.000 y el bus parado toda la jornada.</div>
+            </div>
+          </div>
+
+          {/* Card 2: Excel se perdió */}
+          <div className="card-hover" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, overflow: "hidden" }}>
+            <div style={{ background: "#080c18", borderBottom: "1px solid rgba(255,255,255,0.07)", padding: "1.1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: "#10b981" }} />
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: "#22c55e" }} />
+                </div>
+                <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>Buses_flota_2024_final_v3.xlsx</span>
+              </div>
+              <div style={{ fontSize: 9, fontFamily: "monospace", borderRadius: 6, overflow: "hidden", border: "1px solid rgba(255,255,255,0.07)" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", background: "rgba(255,255,255,0.06)" }}>
+                  {["Patente","Venc. RT","SOAP"].map(h => <div key={h} style={{ padding: "4px 6px", color: "#6b7280", borderRight: "1px solid rgba(255,255,255,0.05)" }}>{h}</div>)}
+                </div>
+                {[
+                  ["BCTK-21", "#VALOR!",   "ok"],
+                  ["GFPR-43", "12/2023",   "#REF!"],
+                  ["RNWK-89", "???",       ""],
+                  ["LMPQ-02", "#######",   "#VALOR!"],
+                ].map((row, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", borderTop: "1px solid rgba(255,255,255,0.04)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                    <div style={{ padding: "4px 6px", color: "#9ca3af", borderRight: "1px solid rgba(255,255,255,0.04)" }}>{row[0]}</div>
+                    <div style={{ padding: "4px 6px", color: row[1].startsWith("#") ? "#ef4444" : "#9ca3af", borderRight: "1px solid rgba(255,255,255,0.04)" }}>{row[1]}</div>
+                    <div style={{ padding: "4px 6px", color: row[2].startsWith("#") ? "#ef4444" : "#4b5563" }}>{row[2]}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ padding: "1.1rem" }}>
+              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>El Excel se perdió</div>
+              <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>Alguien lo modificó, se corrompió o nadie lo actualizó desde hace meses. Los datos no son confiables.</div>
+            </div>
+          </div>
+
+          {/* Card 3: Aviso de último minuto */}
+          <div className="card-hover" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, overflow: "hidden" }}>
+            <div style={{ background: "#080c18", borderBottom: "1px solid rgba(245,158,11,0.12)", padding: "1.1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <div style={{ width: 6, height: 6, borderRadius: 99, background: "#22c55e" }} />
+                <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>WhatsApp · Hoy, 14:32</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div style={{ alignSelf: "flex-start", background: "rgba(255,255,255,0.06)", borderRadius: "10px 10px 10px 2px", padding: "7px 10px", maxWidth: "88%", fontSize: 10, color: "#d1d5db", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 9, color: "#f97316", fontWeight: 600, marginBottom: 3 }}>SEREMITT V Región</div>
+                  Bus <strong>RNWK-89</strong> fue detenido en ruta 68 por <span style={{ color: "#f59e0b" }}>licencia de conductor vencida</span>. Multa en curso.
+                  <div style={{ fontSize: 8, color: "#4b5563", marginTop: 4 }}>14:32 ✓✓</div>
+                </div>
+                <div style={{ alignSelf: "flex-end", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "10px 10px 2px 10px", padding: "6px 10px", fontSize: 10, color: "#fbbf24" }}>
+                  ¿Cuándo venció? 😰
+                  <div style={{ fontSize: 8, color: "#6b7280", marginTop: 3 }}>14:33 ✓</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: "1.1rem" }}>
+              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>Aviso de último minuto</div>
+              <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>Te enteras que la licencia de un conductor venció cuando ya está manejando — y ya es demasiado tarde.</div>
+            </div>
+          </div>
+
+          {/* Card 4: Sin visibilidad */}
+          <div className="card-hover" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, overflow: "hidden" }}>
+            <div style={{ background: "#080c18", borderBottom: "1px solid rgba(59,130,246,0.1)", padding: "1.1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                <div style={{ width: 6, height: 6, borderRadius: 99, background: "#374151" }} />
+                <span style={{ fontSize: 9, color: "#6b7280", fontFamily: "monospace" }}>Panel de control · Sin datos</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: 8 }}>
+                {[
+                  { label: "Buses operativos", color: "#374151" },
+                  { label: "Alertas activas",  color: "#374151" },
+                  { label: "Recaudación hoy",  color: "#374151" },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 7, padding: "8px 6px", textAlign: "center" }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: "#374151", lineHeight: 1 }}>—</div>
+                    <div style={{ fontSize: 8, color: "#374151", marginTop: 3, lineHeight: 1.3 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 7, padding: "8px 10px", fontSize: 9, fontFamily: "monospace" }}>
+                {[["BCTK-21", "?", "?"], ["GFPR-43", "?", "?"], ["RNWK-89", "?", "?"]].map((r, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", color: "#374151", marginBottom: i < 2 ? 5 : 0 }}>
+                    <span>{r[0]}</span><span>RT: {r[1]}</span><span>SOAP: {r[2]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ padding: "1.1rem" }}>
+              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6, color: "#e5e7eb" }}>Sin visibilidad</div>
+              <div style={{ color: "#4b5563", fontSize: 13, lineHeight: 1.65 }}>No sabes cuánto recaudó cada bus hoy, ni el estado real de tus documentos. Operas a ciegas.</div>
+            </div>
+          </div>
+
         </div>
       </section>
 
